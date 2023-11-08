@@ -2,7 +2,7 @@ import numpy as np
 import pickle
 
 
-def xavier_init(size, gain = 1.0):
+def xavier_init(size: (int, int), gain: float = 1.0) -> np.ndarray:
     """
     Xavier initialization of network weights.
 
@@ -212,7 +212,7 @@ class LinearLayer(Layer):
     LinearLayer: Performs affine transformation of input.
     """
 
-    def __init__(self, n_in, n_out):
+    def __init__(self, n_in: int, n_out: int):
         """
         Constructor of the linear layer.
 
@@ -226,8 +226,8 @@ class LinearLayer(Layer):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        self._W = None
-        self._b = None
+        self._W: np.ndarray = xavier_init(n_in, n_out)
+        self._b: np.ndarray = np.zeros(n_in)
 
         self._cache_current = None
         self._grad_W_current = None
@@ -237,7 +237,7 @@ class LinearLayer(Layer):
         #                       ** END OF YOUR CODE **
         #######################################################################
 
-    def forward(self, x):
+    def forward(self, x: np.ndarray) -> np.ndarray:
         """
         Performs forward pass through the layer (i.e. returns Wx + b).
 
@@ -253,7 +253,7 @@ class LinearLayer(Layer):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        pass
+        return self._W.dot(x) + self._b
 
         #######################################################################
         #                       ** END OF YOUR CODE **
@@ -345,7 +345,7 @@ class MultiLayerNetwork(object):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        return np.zeros((1, self.neurons[-1])) # Replace with your own code
+        return np.zeros((1, self.neurons[-1]))  # Replace with your own code
 
         #######################################################################
         #                       ** END OF YOUR CODE **
@@ -416,13 +416,13 @@ class Trainer(object):
     """
 
     def __init__(
-        self,
-        network,
-        batch_size,
-        nb_epoch,
-        learning_rate,
-        loss_fun,
-        shuffle_flag,
+            self,
+            network,
+            batch_size,
+            nb_epoch,
+            learning_rate,
+            loss_fun,
+            shuffle_flag,
     ):
         """
         Constructor of the Trainer.
@@ -635,5 +635,12 @@ def example_main():
     print("Validation accuracy: {}".format(accuracy))
 
 
+# def main():
+#     layer = LinearLayer(2, 1)
+#     print(layer.forward(np.array([5, 5])))
+#     return
+
+
 if __name__ == "__main__":
     example_main()
+    # main()
