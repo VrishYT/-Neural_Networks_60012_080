@@ -105,7 +105,6 @@ class SigmoidLayer(Layer):
         self._cache_current = None
         
     def sigmoid(x):
-        print(1/(1 + np.exp(-x)))
         return 1.0 / (1.0 + np.exp(-x))
 
     def sigmoid_deriv(x):
@@ -129,7 +128,7 @@ class SigmoidLayer(Layer):
         #######################################################################
         self._cache_current = x
         
-        return sigmoid(np.matmul(x, self._W))
+        return sigmoid(np.matmul(x, self._W) + self._b)
         #######################################################################
         #                       ** END OF YOUR CODE **
         #######################################################################
@@ -193,7 +192,7 @@ class ReluLayer(Layer):
         #                       ** START OF YOUR CODE **
         #######################################################################
         self._cache_current = x
-        return relu(np.matmul(x, self._W))
+        return relu(np.matmul(x, self._W) + self_b)
 
         #######################################################################
         #                       ** END OF YOUR CODE **
