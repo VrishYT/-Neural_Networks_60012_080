@@ -284,7 +284,7 @@ class LinearLayer(Layer):
         # dZ/db = 1 (_grad_b)
         self._grad_b_current = grad_z.dot(1)
         # dZ/dX = W
-        return W
+        return grad_z.dot(self._W)
 
         #######################################################################
         #                       ** END OF YOUR CODE **
