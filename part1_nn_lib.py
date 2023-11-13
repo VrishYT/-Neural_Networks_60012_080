@@ -103,6 +103,12 @@ class SigmoidLayer(Layer):
         Constructor of the Sigmoid layer.
         """
         self._cache_current = None
+        
+    def sigmoid(x):
+        return 1.0/(1.0 + np.exp(-x))
+
+    def sigmoid_deriv(x):
+        return x * (1-x)
 
     def forward(self, x):
         """ 
@@ -120,8 +126,8 @@ class SigmoidLayer(Layer):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        pass
-
+        self._cache_current = x
+        return sigmoid(np.matmul(x, self._W)+ self._b)
         #######################################################################
         #                       ** END OF YOUR CODE **
         #######################################################################
@@ -143,7 +149,7 @@ class SigmoidLayer(Layer):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        pass
+        return np.matmul(grad_z, sigmoid_deriv(self._cache_current).transpose())
 
         #######################################################################
         #                       ** END OF YOUR CODE **
