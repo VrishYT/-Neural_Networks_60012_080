@@ -644,13 +644,13 @@ def example_main():
     print("Validation accuracy: {}".format(accuracy))
 
 
-def main():
-    layer = LinearLayer(2, 1)
-    y = layer.forward(np.array([5, 5]).transpose())
-    print(y)
-    return
+# def main():
+#     layer = LinearLayer(2, 1)
+#     y = layer.forward(np.array([5, 5]).transpose())
+#     print(y)
+#     return
 
 
 if __name__ == "__main__":
-    # example_main()
-    main()
+    example_main()
+    # main()
