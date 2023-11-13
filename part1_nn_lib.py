@@ -106,10 +106,10 @@ class SigmoidLayer(Layer):
         
     def sigmoid(x):
         print(1/(1 + np.exp(-x)))
-        return 1/(1 + np.exp(-x))
+        return 1.0 / (1.0 + np.exp(-x))
 
     def sigmoid_deriv(x):
-        return x * (1-x)
+        return x * (1.0 - x)
 
     def forward(self, x):
         """ 
@@ -174,7 +174,7 @@ class ReluLayer(Layer):
         return np.maximum(x, 0)
 
     def dRelu(x):
-        return 1 * (x>0)
+        return 1.0 * (x>0)
 
     def forward(self, x):
         """ 
