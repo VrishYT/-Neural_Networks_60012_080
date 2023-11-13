@@ -105,7 +105,8 @@ class SigmoidLayer(Layer):
         self._cache_current = None
         
     def sigmoid(x):
-        return 1.0/(1.0 + np.exp(-x))
+        print(1/(1 + np.exp(-x)))
+        return 1/(1 + np.exp(-x))
 
     def sigmoid_deriv(x):
         return x * (1-x)
@@ -127,6 +128,7 @@ class SigmoidLayer(Layer):
         #                       ** START OF YOUR CODE **
         #######################################################################
         self._cache_current = x
+        print(np.matmul(x, self._W)+ self._b)
         return sigmoid(np.matmul(x, self._W)+ self._b)
         #######################################################################
         #                       ** END OF YOUR CODE **
@@ -233,9 +235,7 @@ class LinearLayer(Layer):
         #                       ** START OF YOUR CODE **
         #######################################################################
         self._W: np.ndarray = xavier_init((n_in, n_out))
-        print(self._W)
         self._b: np.ndarray = np.zeros(n_out)
-        print(self._b)
 
         self._cache_current = None
         self._grad_W_current = None
@@ -261,8 +261,7 @@ class LinearLayer(Layer):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        print(x)
-        # assert len(x) == self.n_in
+
         self._cache_current = x
         return np.matmul(x, self._W) + self._b
 
