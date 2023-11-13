@@ -253,13 +253,14 @@ class LinearLayer(Layer):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        return self._W.dot(x) + self._b
+        self._cache_current = x
+        return self._W * x + self._b
 
         #######################################################################
         #                       ** END OF YOUR CODE **
         #######################################################################
 
-    def backward(self, grad_z):
+    def backward(self, grad_z: np.ndarray) -> np.ndarray:
         """
         Given `grad_z`, the gradient of some scalar (e.g. loss) with respect to
         the output of this layer, performs back pass through the layer (i.e.
@@ -276,13 +277,19 @@ class LinearLayer(Layer):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        pass
+
+        # dZ/dW = X (_grad_W)
+        self._grad_W_current = grad_z * X
+        # dZ/db = 1 (_grad_b)
+        self._grad_b_current = grad_z
+        # dZ/dX = W
+        return W
 
         #######################################################################
         #                       ** END OF YOUR CODE **
         #######################################################################
 
-    def update_params(self, learning_rate):
+    def update_params(self, learning_rate: float) -> None:
         """
         Performs one step of gradient descent with given learning rate on the
         layer's parameters using currently stored gradients.
@@ -293,7 +300,8 @@ class LinearLayer(Layer):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        pass
+        self._W -= learning_rate * self._grad_W_current
+        self._b -= learning_rate * self._grad_b_current
 
         #######################################################################
         #                       ** END OF YOUR CODE **
