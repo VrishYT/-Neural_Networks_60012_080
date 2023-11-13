@@ -282,11 +282,11 @@ class LinearLayer(Layer):
         #######################################################################
 
         # dZ/dW = X (_grad_W)
-        self._grad_W_current = np.dot(self._cache_current, grad_z)
+        self._grad_W_current = np.dot(self._cache_current.transpose(), grad_z)
         # dZ/db = 1 (_grad_b)
-        self._grad_b_current = np.dot(grad_z, 1)
+        self._grad_b_current = np.dot(grad_z.transpose(), np.ones(n_out))
         # dZ/dX = W
-        return np.dot(grad_z, self._W)
+        return np.dot(grad_z, self._W.transpose())
 
         #######################################################################
         #                       ** END OF YOUR CODE **
