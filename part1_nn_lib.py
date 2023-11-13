@@ -227,7 +227,7 @@ class LinearLayer(Layer):
         #                       ** START OF YOUR CODE **
         #######################################################################
         self._W: np.ndarray = xavier_init(n_in, n_out)
-        self._b: np.ndarray = np.zeros(n_out)
+        self._b: np.ndarray = np.zeros(n_out).transpose()
 
         self._cache_current = None
         self._grad_W_current = None
@@ -255,7 +255,7 @@ class LinearLayer(Layer):
         #######################################################################
         assert len(x) == len(self._W)
         self._cache_current = x
-        return self._W.transpose().dot(x) + self._b
+        return np.dot(self._W.transpose(), x) + self._b
 
         #######################################################################
         #                       ** END OF YOUR CODE **
@@ -280,11 +280,11 @@ class LinearLayer(Layer):
         #######################################################################
 
         # dZ/dW = X (_grad_W)
-        self._grad_W_current = grad_z.dot(self._cache_current)
+        self._grad_W_current = np.dot(self._cache_current, grad_z)
         # dZ/db = 1 (_grad_b)
-        self._grad_b_current = grad_z.dot(1)
+        self._grad_b_current = np.dot(grad_z, 1)
         # dZ/dX = W
-        return grad_z.dot(self._W)
+        return np.dot(grad_z, self._W)
 
         #######################################################################
         #                       ** END OF YOUR CODE **
