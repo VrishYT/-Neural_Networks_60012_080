@@ -226,7 +226,8 @@ class LinearLayer(Layer):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        self._W: np.ndarray = xavier_init(n_in, n_out)
+        self._W: np.ndarray = xavier_init((n_in, n_out))
+        # print(self._W)
         self._b: np.ndarray = np.zeros(n_out).transpose()
 
         self._cache_current = None
@@ -253,7 +254,7 @@ class LinearLayer(Layer):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        assert len(x) == len(self._W)
+        assert len(x) == self.n_in
         self._cache_current = x
         return np.dot(self._W.transpose(), x) + self._b
 
@@ -644,13 +645,15 @@ def example_main():
     print("Validation accuracy: {}".format(accuracy))
 
 
-# def main():
-#     layer = LinearLayer(2, 1)
-#     y = layer.forward(np.array([5, 5]).transpose())
-#     print(y)
-#     return
+def main():
+    layer = LinearLayer(3, 2)
+    x = np.array([[5,1], [5,3], [6,2]])
+    print(x)
+    y = layer.forward(x)
+    print(y)
+    return
 
 
 if __name__ == "__main__":
-    example_main()
-    # main()
+    # example_main()
+    main()
