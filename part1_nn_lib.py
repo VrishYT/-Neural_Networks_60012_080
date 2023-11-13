@@ -151,6 +151,7 @@ class SigmoidLayer(Layer):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
+        print(np.matmul(grad_z, sigmoid_deriv(self._cache_current).transpose()))
         return np.matmul(grad_z, sigmoid_deriv(self._cache_current).transpose())
 
         #######################################################################
@@ -169,6 +170,12 @@ class ReluLayer(Layer):
         """
         self._cache_current = None
 
+    def relu(x):
+        return np.maximum(x, 0)
+
+    def dRelu(x):
+        return 1 * (x>0)
+
     def forward(self, x):
         """ 
         Performs forward pass through the Relu layer.
@@ -185,7 +192,8 @@ class ReluLayer(Layer):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        pass
+        self._cache_current = x
+        return relu(np.matmul(x, self._W)+ self._b)
 
         #######################################################################
         #                       ** END OF YOUR CODE **
@@ -208,7 +216,7 @@ class ReluLayer(Layer):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        pass
+        return np.matmul(grad_z, dRelu(self._cache_current).transpose())
 
         #######################################################################
         #                       ** END OF YOUR CODE **
