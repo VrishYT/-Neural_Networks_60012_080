@@ -255,9 +255,10 @@ class LinearLayer(Layer):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
+        print(x)
         # assert len(x) == self.n_in
         self._cache_current = x
-        return np.dot(x, self._W) + self._b
+        return np.matmul(x, self._W) + self._b
 
         #######################################################################
         #                       ** END OF YOUR CODE **
@@ -282,11 +283,11 @@ class LinearLayer(Layer):
         #######################################################################
 
         # dZ/dW = X (_grad_W)
-        self._grad_W_current = np.dot(self._cache_current.transpose(), grad_z)
+        self._grad_W_current = np.matmul(self._cache_current.transpose(), grad_z)
         # dZ/db = 1 (_grad_b)
-        self._grad_b_current = np.dot(grad_z.transpose(), np.ones(n_out))
+        self._grad_b_current = np.sum(grad_z, axis=0)
         # dZ/dX = W
-        return np.dot(grad_z, self._W.transpose())
+        return np.matmul(grad_z, self._W.transpose())
 
         #######################################################################
         #                       ** END OF YOUR CODE **
