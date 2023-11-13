@@ -227,8 +227,7 @@ class LinearLayer(Layer):
         #                       ** START OF YOUR CODE **
         #######################################################################
         self._W: np.ndarray = xavier_init((n_in, n_out))
-        # print(self._W)
-        self._b: np.ndarray = np.zeros(n_out).transpose()
+        self._b: np.ndarray = np.zeros((n_out, 1))
 
         self._cache_current = None
         self._grad_W_current = None
