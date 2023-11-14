@@ -383,6 +383,8 @@ class MultiLayerNetwork(object):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
+
+        print("*-- Init x =", x)
         current = x
         for layer in self._layers:
             current = layer.forward(current)
@@ -685,15 +687,15 @@ def example_main():
 
 def main():
     # layer = LinearLayer(3, 2)
-    x = np.array([5, 3, 4])
+    x = np.array([5, 3, 4, 7, 8])
     # print(x)
     # y = layer.forward(x)
     # print(y)
 
     network = MultiLayerNetwork(
-        input_dim=3,
-        neurons=[16, 2],
-        activations=["relu", "sigmoid"]
+        input_dim=5,
+        neurons=[8, 6, 2],
+        activations=["identity", "identity", "identity"]
     )
     y = network.forward(x)
     print(y)
