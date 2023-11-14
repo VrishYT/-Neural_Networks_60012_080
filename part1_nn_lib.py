@@ -381,7 +381,7 @@ class MultiLayerNetwork(object):
         #######################################################################
         current = x
         for layer in self._layers:
-            current = layer.forward(x)
+            current = layer.forward(current)
 
         return current
 
@@ -409,7 +409,7 @@ class MultiLayerNetwork(object):
         #######################################################################
         current = x
         for layer in self._layers.reverse():
-            current = layer.backward(x)
+            current = layer.backward(current)
 
         return current
 
