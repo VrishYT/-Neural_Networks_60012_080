@@ -151,7 +151,7 @@ class SigmoidLayer(Layer):
         def sigmoid_deriv(x):
             return x * (1.0 - x)
 
-        return np.matmul(grad_z, sigmoid_deriv(self._cache_current))
+        return (grad_z * sigmoid_deriv(self._cache_current))
 
         #######################################################################
         #                       ** END OF YOUR CODE **
@@ -215,7 +215,7 @@ class ReluLayer(Layer):
         def dRelu(x):
             return 1.0 * (x>0)
 
-        return np.matmul(grad_z, dRelu(self._cache_current))
+        return (grad_z * dRelu(self._cache_current))
 
         #######################################################################
         #                       ** END OF YOUR CODE **
