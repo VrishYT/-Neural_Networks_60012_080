@@ -354,6 +354,8 @@ class MultiLayerNetwork(object):
         #######################################################################
         self._layers = list()
 
+        print(input_dim, neurons, activations)
+
         n_in = input_dim
         for n_out, activation in zip(neurons, activations):
             self._layers.append(LinearLayer(n_in, n_out))
