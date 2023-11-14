@@ -128,7 +128,7 @@ class SigmoidLayer(Layer):
         #######################################################################
         self._cache_current = x
         
-        return sigmoid(np.matmul(x, self._W) + self._b)
+        return sigmoid(x)
         #######################################################################
         #                       ** END OF YOUR CODE **
         #######################################################################
@@ -192,7 +192,7 @@ class ReluLayer(Layer):
         #                       ** START OF YOUR CODE **
         #######################################################################
         self._cache_current = x
-        return relu(np.matmul(x, self._W) + self_b)
+        return relu(np.matmul(x, self._W) + self._b)
 
         #######################################################################
         #                       ** END OF YOUR CODE **
