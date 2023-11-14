@@ -103,13 +103,6 @@ class SigmoidLayer(Layer):
         Constructor of the Sigmoid layer.
         """
         self._cache_current = None
-        
-    def sigmoid(self, x):
-        print(1.0 / (1.0 + np.exp(-x)))
-        return 1.0 / (1.0 + np.exp(-x))
-
-    def sigmoid_deriv(self,x):
-        return x * (1.0 - x)
 
     def forward(self, x):
         """ 
@@ -127,9 +120,13 @@ class SigmoidLayer(Layer):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        self._cache_current = x
+        def sigmoid(x):
+            return 1.0 / (1.0 + np.exp(-x))
+
+        output = sigmoid(x)
+        self._cache_current = output
         
-        return self.sigmoid(x)
+        return output
         #######################################################################
         #                       ** END OF YOUR CODE **
         #######################################################################
@@ -151,7 +148,9 @@ class SigmoidLayer(Layer):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        print(np.matmul(grad_z, self.sigmoid_deriv(self._cache_current).transpose()))
+        def sigmoid_deriv(self,x):
+            return x * (1.0 - x)
+
         return np.matmul(grad_z, self.sigmoid_deriv(self._cache_current).transpose())
 
         #######################################################################
@@ -170,12 +169,6 @@ class ReluLayer(Layer):
         """
         self._cache_current = None
 
-    def relu(x):
-        return np.maximum(x, 0)
-
-    def dRelu(x):
-        return 1.0 * (x>0)
-
     def forward(self, x):
         """ 
         Performs forward pass through the Relu layer.
@@ -192,7 +185,10 @@ class ReluLayer(Layer):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
+        def relu(x):
+            return np.maximum(x, 0)
         self._cache_current = x
+        
         return relu(np.matmul(x, self._W) + self._b)
 
         #######################################################################
@@ -216,6 +212,9 @@ class ReluLayer(Layer):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
+        def dRelu(x):
+            return 1.0 * (x>0)
+
         return np.matmul(grad_z, dRelu(self._cache_current).transpose())
 
         #######################################################################
