@@ -270,6 +270,7 @@ class LinearLayer(Layer):
         #######################################################################
 
         self._cache_current = x
+        print("x=", x, "\nW=", self._W, "\nb=", self._b)
         return np.matmul(x, self._W) + self._b
 
         #######################################################################
@@ -356,6 +357,7 @@ class MultiLayerNetwork(object):
         n_in = input_dim
         for n_out, activation in zip(neurons, activations):
             self._layers.append(LinearLayer(n_in, n_out))
+            n_in = n_out
             if activation == "sigmoid":
                 self._layers.append(SigmoidLayer())
             elif activation == "relu":
