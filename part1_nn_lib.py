@@ -343,6 +343,7 @@ class MultiLayerNetwork(object):
             - activations {list} -- List of the activation functions to apply 
                 to the output of each linear layer.
         """
+        # TODO: these may be unneeded.
         self.input_dim = input_dim
         self.neurons = neurons
         self.activations = activations
@@ -350,7 +351,16 @@ class MultiLayerNetwork(object):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        self._layers = None
+        self._layers = list()
+
+        n_in = input_dim
+        for n_out, activation in zip(neurons, activations):
+            self._layers.append(LinearLayer(n_in, n_out))
+            if activation == "sigmoid":
+                self._layers.append(SigmoidLayer())
+            elif activation == "relu":
+                self._layers.append(ReluLayer())
+
         #######################################################################
         #                       ** END OF YOUR CODE **
         #######################################################################
@@ -369,7 +379,11 @@ class MultiLayerNetwork(object):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        return np.zeros((1, self.neurons[-1]))  # Replace with your own code
+        current = x
+        for layer in self._layers:
+            current = layer.forward(x)
+
+        return current
 
         #######################################################################
         #                       ** END OF YOUR CODE **
@@ -393,7 +407,11 @@ class MultiLayerNetwork(object):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        pass
+        current = x
+        for layer in self._layers.reverse():
+            current = layer.backward(x)
+
+        return current
 
         #######################################################################
         #                       ** END OF YOUR CODE **
@@ -410,7 +428,9 @@ class MultiLayerNetwork(object):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        pass
+
+        for layer in self._layers:
+            layer.update_params(learning_rate)
 
         #######################################################################
         #                       ** END OF YOUR CODE **
@@ -660,11 +680,20 @@ def example_main():
 
 
 def main():
-    layer = LinearLayer(3, 2)
-    x = np.array([5,3,4])
-    print(x)
-    y = layer.forward(x)
+    # layer = LinearLayer(3, 2)
+    x = np.array([5, 3, 4])
+    # print(x)
+    # y = layer.forward(x)
+    # print(y)
+
+    network = MultiLayerNetwork(
+        input_dim=3,
+        neurons=[16, 2],
+        activations=["relu", "sigmoid"]
+    )
+    y = network.forward(x)
     print(y)
+
     return
 
 
