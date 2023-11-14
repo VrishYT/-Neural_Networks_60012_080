@@ -104,10 +104,11 @@ class SigmoidLayer(Layer):
         """
         self._cache_current = None
         
-    def sigmoid(x):
+    def sigmoid(self, x):
+        print(1.0 / (1.0 + np.exp(-x)))
         return 1.0 / (1.0 + np.exp(-x))
 
-    def sigmoid_deriv(x):
+    def sigmoid_deriv(self,x):
         return x * (1.0 - x)
 
     def forward(self, x):
@@ -128,7 +129,7 @@ class SigmoidLayer(Layer):
         #######################################################################
         self._cache_current = x
         
-        return sigmoid(x)
+        return self.sigmoid(x)
         #######################################################################
         #                       ** END OF YOUR CODE **
         #######################################################################
@@ -150,8 +151,8 @@ class SigmoidLayer(Layer):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        print(np.matmul(grad_z, sigmoid_deriv(self._cache_current).transpose()))
-        return np.matmul(grad_z, sigmoid_deriv(self._cache_current).transpose())
+        print(np.matmul(grad_z, self.sigmoid_deriv(self._cache_current).transpose()))
+        return np.matmul(grad_z, self.sigmoid_deriv(self._cache_current).transpose())
 
         #######################################################################
         #                       ** END OF YOUR CODE **
