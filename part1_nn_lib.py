@@ -148,10 +148,10 @@ class SigmoidLayer(Layer):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        def sigmoid_deriv(self,x):
+        def sigmoid_deriv(x):
             return x * (1.0 - x)
 
-        return np.matmul(grad_z, self.sigmoid_deriv(self._cache_current).transpose())
+        return np.matmul(grad_z, sigmoid_deriv(self._cache_current).transpose())
 
         #######################################################################
         #                       ** END OF YOUR CODE **
@@ -188,8 +188,8 @@ class ReluLayer(Layer):
         def relu(x):
             return np.maximum(x, 0)
         self._cache_current = x
-        
-        return relu(np.matmul(x, self._W) + self._b)
+
+        return relu(x)
 
         #######################################################################
         #                       ** END OF YOUR CODE **
