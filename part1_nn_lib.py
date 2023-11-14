@@ -270,7 +270,7 @@ class LinearLayer(Layer):
         #######################################################################
 
         self._cache_current = x
-        print("x=", x, "\nW=", self._W, "\nb=", self._b)
+        # print("x=", x, "\nW=", self._W, "\nb=", self._b)
         return np.matmul(x, self._W) + self._b
 
         #######################################################################
@@ -413,8 +413,8 @@ class MultiLayerNetwork(object):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        current = x
-        for layer in self._layers.reverse():
+        current = grad_z
+        for layer in self._layers[::-1]:
             current = layer.backward(current)
 
         return current
@@ -698,7 +698,20 @@ def main():
         activations=["identity", "identity", "identity"]
     )
     y = network.forward(x)
-    print(y)
+    N = 10
+    n_in = 5
+    import numpy.random as rand
+    rand.seed(1)
+    X = rand.rand(N, n_in)
+    grad_z = rand.rand(N, 2)
+
+    o1 = network.forward(X)
+    network.backward(grad_z)
+    network.update_params(0)
+    o2 = network.forward(X)
+    #print(np.isclose(o1,o2).all())
+
+    # print(y)
 
     return
 
