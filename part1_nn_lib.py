@@ -529,7 +529,7 @@ class Trainer(object):
         shufled_inputs = input_dataset[shuffled_indices]
         shuffled_targets = target_dataset[shuffled_indices]
 
-        return(shufled_inputs, shuffled_targets)
+        return shufled_inputs, shuffled_targets
         #######################################################################
         #                       ** END OF YOUR CODE **
         #######################################################################
@@ -559,7 +559,7 @@ class Trainer(object):
         #######################################################################
         for epoch in range(self.nb_epoch):
 
-            if(self.shuffle_flag):
+            if (self.shuffle_flag):
                 (input_dataset, target_dataset) = Trainer.shuffle(input_dataset, target_dataset)
             
             input_data_in_batches = []
@@ -570,7 +570,8 @@ class Trainer(object):
                 input_data_in_batches.append(input_dataset[i:i+self.batch_size])
                 target_data_in_batches.append(target_dataset[i:i+self.batch_size])
 
-            for i in range (self.batch_size):
+            number_of_batches = len(input_dataset) // self.batch_size
+            for i in range (number_of_batches):
                 x = self.network.forward(input_data_in_batches[i])
                 self._loss_layer.forward(x, target_data_in_batches[i])
                 grad_z = self._loss_layer.backward()
