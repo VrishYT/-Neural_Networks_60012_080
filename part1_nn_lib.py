@@ -523,7 +523,9 @@ class Trainer(object):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        shuffled_indices = random_generator.permutation(len(input_dataset))
+        shuffled_indices = np.arange(len(input_dataset))
+        np.random.shuffle(shuffled_indices)
+        
         shufled_inputs = input_dataset[shuffled_indices]
         shuffled_targets = target_dataset[shuffled_indices]
 
@@ -558,19 +560,16 @@ class Trainer(object):
         for i in range(self.nb_epoch):
 
             if(self.shuffle):
-                (input_dataset, target_dataset) = shuffle(input_dataset, target_dataset)
+                (input_dataset, target_dataset) = self.shuffle(input_dataset, target_dataset)
             
             input_data_in_batches = []
             target_data_in_batches = []
 
-            print("input dataset", input_dataset)
-            print("nr batches", self.batch_size)
             #split into batches
             for i in range(0, len(input_dataset), self.batch_size):
-                input_data_in_batches.append(input_dataset[i:i+batch_size])
-                target_data_in_batches.append(target_dataset[i:i+batch_size])
-            print("input in batches", input_data_in_batches)
-            
+                input_data_in_batches.append(input_dataset[i:i+self.batch_size])
+                target_data_in_batches.append(target_dataset[i:i+self.batch_size])
+
             for i in range (self.batch_size):
                 x = self.network.forward(input_data_in_batches[i])
                 self._loss_layer.forward(x, target_data_in_batches[i])
@@ -689,10 +688,10 @@ def example_main():
     x_val = x[split_idx:]
     y_val = y[split_idx:]
 
-    prep_input = Preprocessor(x_train)
+   # prep_input = Preprocessor(x_train)
 
-    x_train_pre = prep_input.apply(x_train)
-    x_val_pre = prep_input.apply(x_val)
+    #x_train_pre = prep_input.apply(x_train)
+    #x_val_pre = prep_input.apply(x_val)
 
     trainer = Trainer(
         network=net,
@@ -703,14 +702,14 @@ def example_main():
         shuffle_flag=True,
     )
 
-    trainer.train(x_train_pre, y_train)
-    print("Train loss = ", trainer.eval_loss(x_train_pre, y_train))
-    print("Validation loss = ", trainer.eval_loss(x_val_pre, y_val))
+    trainer.train(x_train, y_train)
+    print("Train loss = ", trainer.eval_loss(x_train, y_train))
+    print("Validation loss = ", trainer.eval_loss(x_val, y_val))
 
-    preds = net(x_val_pre).argmax(axis=1).squeeze()
-    targets = y_val.argmax(axis=1).squeeze()
-    accuracy = (preds == targets).mean()
-    print("Validation accuracy: {}".format(accuracy))
+    #preds = net(x_val_pre).argmax(axis=1).squeeze()
+    #targets = y_val.argmax(axis=1).squeeze()
+    #accuracy = (preds == targets).mean()
+    #print("Validation accuracy: {}".format(accuracy))
 
 
 def main():
@@ -755,5 +754,5 @@ def main():
 
 
 if __name__ == "__main__":
-    # example_main()
-    main()
+     example_main()
+    #main()
