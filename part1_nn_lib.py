@@ -498,6 +498,11 @@ class Trainer(object):
         #                       ** START OF YOUR CODE **
         #######################################################################
         self._loss_layer = None
+        if (self.loss_fun == "mse"):
+            self._loss_layer = MSELossLayer()
+        elif (self.loss_fun == "cross_entropy"):
+            self._loss_layer = CrossEntropyLossLayer()
+        
         #######################################################################
         #                       ** END OF YOUR CODE **
         #######################################################################
@@ -520,8 +525,11 @@ class Trainer(object):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        pass
+        shuffled_indices = random_generator.permutation(len(input_dataset))
+        shufled_inputs = input_dataset[shuffled_indices]
+        shuffled_targets = target_dataset[shuffled_indices]
 
+        return(shufled_inputs, shuffled_targets)
         #######################################################################
         #                       ** END OF YOUR CODE **
         #######################################################################
@@ -549,8 +557,26 @@ class Trainer(object):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        pass
+        for i in range(self.nb_epoch):
 
+            if(shuffle):
+                (input_dataset, target_dataset) = shuffle(input_dataset, target_dataset)
+            
+            input_data_in_batches = []
+            target_data_in_batches = []
+
+            #split into batches
+            for i in range(0, len(input_dataset), self.batch_size):
+                input_data_in_batches.append(input_dataset[i:i+batch_size])
+                target_data_in_batches.append(target_dataset[i:i+batch_size])
+
+            for i in range (self.batch_size):
+                x = self.network.forward(input_data_in_batches[i])
+                self._loss_layer.forward(x, target_data_in_batches[i])
+                grad_z = self._loss_layer.backward()
+                self.network.backward(grad_z)
+                self.network.update_params(self.learning_rate)
+        
         #######################################################################
         #                       ** END OF YOUR CODE **
         #######################################################################
@@ -712,6 +738,16 @@ def main():
     #print(np.isclose(o1,o2).all())
 
     # print(y)
+    trainer = Trainer(
+    network=network,
+    batch_size=32,
+    nb_epoch=10,
+    learning_rate=1.0e-3,
+    shuffle_flag=True,
+    loss_fun="mse",
+    )
+    #trainer.train(train_inputs, train_targets)
+#print("Validation loss = ", trainer.eval_loss(val_inputs, val_targets))
 
     return
 
