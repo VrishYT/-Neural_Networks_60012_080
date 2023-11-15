@@ -557,10 +557,10 @@ class Trainer(object):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        for i in range(self.nb_epoch):
+        for epoch in range(self.nb_epoch):
 
-            if(self.shuffle):
-                (input_dataset, target_dataset) = self.shuffle(input_dataset, target_dataset)
+            if(self.shuffle_flag):
+                (input_dataset, target_dataset) = Trainer.shuffle(input_dataset, target_dataset)
             
             input_data_in_batches = []
             target_data_in_batches = []
@@ -598,7 +598,7 @@ class Trainer(object):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        predictions = self.network.forward(input_dataset)
+        predictions = self.network(input_dataset)
         return self._loss_layer.forward(predictions, target_dataset)
 
         #######################################################################
