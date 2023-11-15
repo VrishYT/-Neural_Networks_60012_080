@@ -627,7 +627,9 @@ class Preprocessor(object):
         #######################################################################
         self.min_value = np.min(data)
         self.max_value = np.max(data)
-
+        print(data)
+        print(min_value)
+        print(max_value)
         #######################################################################
         #                       ** END OF YOUR CODE **
         #######################################################################
@@ -667,8 +669,9 @@ class Preprocessor(object):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        
-        return np.sum(np.multiply(data, np.subtract(self.max_value, self.min_value)), self.min_value)
+        if(self.min_value == self.max_value):
+            return np.sum(data, self.min_value)
+        return np.add(np.multiply(data, np.subtract(self.max_value, self.min_value)), self.min_value)
 
         #######################################################################
         #                       ** END OF YOUR CODE **
