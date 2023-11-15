@@ -645,8 +645,6 @@ class Preprocessor(object):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        if(self.max_value == self.min_value):
-            return np.subtract(data, self.min_value)
 
         return np.divide(np.subtract(data, self.min_value),np.subtract(self.max_value, self.min_value))
 
@@ -667,8 +665,7 @@ class Preprocessor(object):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        if(self.min_value == self.max_value):
-            return np.add(data, self.min_value)
+       
         return np.add(np.multiply(data, np.subtract(self.max_value, self.min_value)), self.min_value)
 
         #######################################################################
