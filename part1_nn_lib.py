@@ -354,8 +354,6 @@ class MultiLayerNetwork(object):
         #######################################################################
         self._layers = list()
 
-        print(input_dim, neurons, activations)
-
         n_in = input_dim
         for n_out, activation in zip(neurons, activations):
             self._layers.append(LinearLayer(n_in, n_out))
@@ -384,7 +382,7 @@ class MultiLayerNetwork(object):
         #                       ** START OF YOUR CODE **
         #######################################################################
 
-        print("*-- Init x =", x)
+        #print("*-- Init x =", x)
         current = x
         for layer in self._layers:
             current = layer.forward(current)
@@ -559,17 +557,20 @@ class Trainer(object):
         #######################################################################
         for i in range(self.nb_epoch):
 
-            if(shuffle):
+            if(self.shuffle):
                 (input_dataset, target_dataset) = shuffle(input_dataset, target_dataset)
             
             input_data_in_batches = []
             target_data_in_batches = []
 
+            print("input dataset", input_dataset)
+            print("nr batches", self.batch_size)
             #split into batches
             for i in range(0, len(input_dataset), self.batch_size):
                 input_data_in_batches.append(input_dataset[i:i+batch_size])
                 target_data_in_batches.append(target_dataset[i:i+batch_size])
-
+            print("input in batches", input_data_in_batches)
+            
             for i in range (self.batch_size):
                 x = self.network.forward(input_data_in_batches[i])
                 self._loss_layer.forward(x, target_data_in_batches[i])
@@ -598,7 +599,8 @@ class Trainer(object):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        pass
+        predictions = self.network.forward(input_dataset)
+        return self._loss_layer.forward(predictions, target_dataset)
 
         #######################################################################
         #                       ** END OF YOUR CODE **
