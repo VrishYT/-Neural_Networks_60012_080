@@ -625,11 +625,9 @@ class Preprocessor(object):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        self.min_value = np.min(data)
-        self.max_value = np.max(data)
-        print(data)
-        print(self.min_value)
-        print(self.max_value)
+        self.min_value = np.min(data, axis=0)
+        self.max_value = np.max(data, axis=0)
+       
         #######################################################################
         #                       ** END OF YOUR CODE **
         #######################################################################
@@ -670,7 +668,7 @@ class Preprocessor(object):
         #                       ** START OF YOUR CODE **
         #######################################################################
         if(self.min_value == self.max_value):
-            return np.sum(data, self.min_value)
+            return np.add(data, self.min_value)
         return np.add(np.multiply(data, np.subtract(self.max_value, self.min_value)), self.min_value)
 
         #######################################################################
@@ -697,9 +695,11 @@ def example_main():
     x_val = x[split_idx:]
     y_val = y[split_idx:]
 
-    print(x_train)
+    
     prep_input = Preprocessor(x_train)
-    print(prep_input.revert(prep_input.apply(x_train)))
+
+    print(prep_input)
+    
     x_train_pre = prep_input.apply(x_train)
     x_val_pre = prep_input.apply(x_val)
 
