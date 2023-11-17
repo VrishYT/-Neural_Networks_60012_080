@@ -160,7 +160,9 @@ class Regressor():
         #######################################################################
 
         X, _ = self._preprocessor(x, training = False) # Do not forget
-        pass
+        with torch.no_grad():
+            y_predicted = self.network(X)
+        return y_predicted
 
         #######################################################################
         #                       ** END OF YOUR CODE **
@@ -185,6 +187,10 @@ class Regressor():
         #######################################################################
 
         X, Y = self._preprocessor(x, y = y, training = False) # Do not forget
+        y_predicted = self.predict(x)
+        # call some kind of evaluation function on y_predicted and Y
+        # decide whether to micro or macro average these results
+        
         return 0 # Replace this code with your own
 
         #######################################################################
@@ -232,6 +238,10 @@ def RegressorHyperParameterSearch():
     #                       ** START OF YOUR CODE **
     #######################################################################
 
+    # tune hyperparams
+    '''
+    we have nb_epoch, hidden layer shape, learning_rate, and momentum as HPs
+    '''
     return  # Return the chosen hyper parameters
 
     #######################################################################
