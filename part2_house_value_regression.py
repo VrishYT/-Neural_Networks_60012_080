@@ -2,10 +2,14 @@ import torch
 import pickle
 import numpy as np
 import pandas as pd
+from network import Network
+from sklearn.preprocessing import LabelBinarizer, Normalizer, MinMaxScaler, OneHotEncoder
+from sklearn.compose import ColumnTransformer
+from torch import nn
 
 class Regressor():
 
-    def __init__(self, x, nb_epoch = 1000):
+    def __init__(self, x, nb_epoch = 1000, hidden_layers = [], learning_rate = 1e-2, momentum = 0.9):
         # You can add any input parameters you need
         # Remember to set them with a default value for LabTS tests
         """ 
@@ -27,7 +31,11 @@ class Regressor():
         X, _ = self._preprocessor(x, training = True)
         self.input_size = X.shape[1]
         self.output_size = 1
-        self.nb_epoch = nb_epoch 
+        self.nb_epoch = nb_epoch
+        self.learning_rate = learning_rate
+        self.hidden_layers = hidden_layers
+        self.momentum = momentum
+        self.network = None
         return
 
         #######################################################################
@@ -59,8 +67,21 @@ class Regressor():
 
         # Replace this code with your own
         # Return preprocessed x and y, return None for y if it was None
-        x.fillna(0)
-        return x, (y if isinstance(y, pd.DataFrame) else None)
+        z = x.fillna(0)
+        ct = ColumnTransformer ([
+            ("num", MinMaxScaler(), ["longitude","latitude","housing_median_age","total_rooms","total_bedrooms","population","households","median_income"]),
+            ("cat", OneHotEncoder(handle_unknown="ignore"), ["ocean_proximity"])
+        ])
+        resx = ct.fit_transform(z)
+
+        resy = None
+        if y is not None:
+            m = y.fillna(0)
+            ct2 = ColumnTransformer ([
+                ("num", MinMaxScaler(), ["median_house_value"])
+            ])
+            resy = torch.from_numpy(ct2.fit_transform(m)) 
+        return torch.from_numpy(resx), resy
 
         #######################################################################
         #                       ** END OF YOUR CODE **
@@ -84,8 +105,36 @@ class Regressor():
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
+        
+        device = 'cpu'
+        if torch.cuda.is_available():
+            pass#device = 'cuda'
+        
+        #torch.randn((), device=device, dtype=torch.float64)
+        x_train_tensor, y_train_tensor = self._preprocessor(x, y = y, training = True) # Do not forget
+        x_train_tensor = x_train_tensor.to(device)
+        y_train_tensor = y_train_tensor.to(device)
 
-        X, Y = self._preprocessor(x, y = y, training = True) # Do not forget
+        # build a layer for each element in the hidden layer list
+        input_features = len(x_train_tensor[0])
+        output_features = 1
+        layers_for_network = [input_features] + self.hidden_layers + [output_features]
+        
+        self.network = Network(layers_for_network).to(device)
+        
+        for epoch in range(self.nb_epoch):
+            # Perform forward pass though the model given the input.
+            run = self.network(x_train_tensor)
+            # Compute the loss based on this forward pass.
+            mse_loss = nn.MSELoss()
+            result = mse_loss(run, y_train_tensor)
+            # Perform backwards pass to compute gradients of loss with respect to parameters of the model.
+            result.backward()
+            # Perform one step of gradient descent on the model parameters.
+            optimiser = torch.optim.SGD(self.network.parameters(), lr=self.learning_rate, momentum=self.momentum)
+            optimiser.step()
+            # You are free to implement any additional steps to improve learning (batch-learning, shuffling...).            
+
         return self
 
         #######################################################################
