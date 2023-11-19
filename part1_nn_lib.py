@@ -147,7 +147,7 @@ class SigmoidLayer(Layer):
         #######################################################################
 
         dSigmoid = lambda x: x * (1.0 - x)
-        return (grad_z * dSigmoid(self._cache_current))
+        return grad_z * dSigmoid(self._cache_current)
 
         #######################################################################
         #                       ** END OF YOUR CODE **
@@ -208,7 +208,7 @@ class ReluLayer(Layer):
         #######################################################################
 
         dRelu = lambda x: 1.0 * (x > 0)
-        return (grad_z * dRelu(self._cache_current))
+        return grad_z * dRelu(self._cache_current)
 
         #######################################################################
         #                       ** END OF YOUR CODE **
@@ -335,7 +335,7 @@ class MultiLayerNetwork(object):
             - activations {list} -- List of the activation functions to apply 
                 to the output of each linear layer.
         """
-        
+
         self.input_dim = input_dim
         self.neurons = neurons
         self.activations = activations
@@ -490,11 +490,11 @@ class Trainer(object):
         #######################################################################
 
         self._loss_layer = None
-        if (self.loss_fun == "mse"):
+        if self.loss_fun == "mse":
             self._loss_layer = MSELossLayer()
-        elif (self.loss_fun == "cross_entropy"):
+        elif self.loss_fun == "cross_entropy":
             self._loss_layer = CrossEntropyLossLayer()
-        
+
         #######################################################################
         #                       ** END OF YOUR CODE **
         #######################################################################
@@ -520,11 +520,11 @@ class Trainer(object):
 
         shuffled_indices = np.arange(len(input_dataset))
         np.random.shuffle(shuffled_indices)
-        
-        shufled_inputs = input_dataset[shuffled_indices]
+
+        shuffled_inputs = input_dataset[shuffled_indices]
         shuffled_targets = target_dataset[shuffled_indices]
 
-        return shufled_inputs, shuffled_targets
+        return shuffled_inputs, shuffled_targets
         #######################################################################
         #                       ** END OF YOUR CODE **
         #######################################################################
@@ -555,25 +555,25 @@ class Trainer(object):
 
         for epoch in range(self.nb_epoch):
 
-            if (self.shuffle_flag):
+            if self.shuffle_flag:
                 (input_dataset, target_dataset) = Trainer.shuffle(input_dataset, target_dataset)
-            
+
             input_data_in_batches = []
             target_data_in_batches = []
 
-            #split into batches
+            # split into batches
             for i in range(0, len(input_dataset), self.batch_size):
-                input_data_in_batches.append(input_dataset[i:i+self.batch_size])
-                target_data_in_batches.append(target_dataset[i:i+self.batch_size])
+                input_data_in_batches.append(input_dataset[i:i + self.batch_size])
+                target_data_in_batches.append(target_dataset[i:i + self.batch_size])
 
             number_of_batches = len(input_dataset) // self.batch_size
-            for i in range (number_of_batches):
+            for i in range(number_of_batches):
                 x = self.network.forward(input_data_in_batches[i])
                 self._loss_layer.forward(x, target_data_in_batches[i])
                 grad_z = self._loss_layer.backward()
                 self.network.backward(grad_z)
                 self.network.update_params(self.learning_rate)
-        
+
         #######################################################################
         #                       ** END OF YOUR CODE **
         #######################################################################
@@ -625,7 +625,7 @@ class Preprocessor(object):
 
         self.min_value = np.min(data, axis=0)
         self.max_value = np.max(data, axis=0)
-       
+
         #######################################################################
         #                       ** END OF YOUR CODE **
         #######################################################################
@@ -644,7 +644,7 @@ class Preprocessor(object):
         #                       ** START OF YOUR CODE **
         #######################################################################
 
-        return np.divide(np.subtract(data, self.min_value),np.subtract(self.max_value, self.min_value))
+        return np.divide(np.subtract(data, self.min_value), np.subtract(self.max_value, self.min_value))
 
         #######################################################################
         #                       ** END OF YOUR CODE **
@@ -663,7 +663,7 @@ class Preprocessor(object):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-       
+
         return np.add(np.multiply(data, np.subtract(self.max_value, self.min_value)), self.min_value)
 
         #######################################################################
@@ -715,4 +715,4 @@ def example_main():
 
 
 if __name__ == "__main__":
-     example_main()
+    example_main()
