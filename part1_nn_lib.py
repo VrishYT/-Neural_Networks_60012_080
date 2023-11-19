@@ -120,13 +120,10 @@ class SigmoidLayer(Layer):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        def sigmoid(x):
-            return 1.0 / (1.0 + np.exp(-x))
 
-        output = sigmoid(x)
-        self._cache_current = output
-        
-        return output
+        self._cache_current = 1.0 / (1.0 + np.exp(-x))
+        return self._cache_current
+
         #######################################################################
         #                       ** END OF YOUR CODE **
         #######################################################################
@@ -148,10 +145,9 @@ class SigmoidLayer(Layer):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        def sigmoid_deriv(x):
-            return x * (1.0 - x)
 
-        return (grad_z * sigmoid_deriv(self._cache_current))
+        dSigmoid = lambda x: x * (1.0 - x)
+        return (grad_z * dSigmoid(self._cache_current))
 
         #######################################################################
         #                       ** END OF YOUR CODE **
@@ -185,11 +181,9 @@ class ReluLayer(Layer):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        def relu(x):
-            return np.maximum(x, 0)
-        self._cache_current = x
 
-        return relu(x)
+        self._cache_current = x
+        return np.maximum(x, 0)
 
         #######################################################################
         #                       ** END OF YOUR CODE **
@@ -212,9 +206,8 @@ class ReluLayer(Layer):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        def dRelu(x):
-            return 1.0 * (x>0)
 
+        dRelu = lambda x: 1.0 * (x > 0)
         return (grad_z * dRelu(self._cache_current))
 
         #######################################################################
@@ -241,6 +234,7 @@ class LinearLayer(Layer):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
+
         self._W: np.ndarray = xavier_init((n_in, n_out))
         self._b: np.ndarray = np.zeros((1, n_out))
 
@@ -270,7 +264,6 @@ class LinearLayer(Layer):
         #######################################################################
 
         self._cache_current = x
-        # print("x=", x, "\nW=", self._W, "\nb=", self._b)
         return np.matmul(x, self._W) + self._b
 
         #######################################################################
@@ -295,11 +288,8 @@ class LinearLayer(Layer):
         #                       ** START OF YOUR CODE **
         #######################################################################
 
-        # dZ/dW = X (_grad_W)
         self._grad_W_current = np.matmul(self._cache_current.transpose(), grad_z)
-        # dZ/db = 1 (_grad_b)
         self._grad_b_current = np.sum(grad_z, axis=0)
-        # dZ/dX = W
         return np.matmul(grad_z, self._W.transpose())
 
         #######################################################################
@@ -317,6 +307,7 @@ class LinearLayer(Layer):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
+
         self._W -= learning_rate * self._grad_W_current
         self._b -= learning_rate * self._grad_b_current
 
@@ -344,7 +335,7 @@ class MultiLayerNetwork(object):
             - activations {list} -- List of the activation functions to apply 
                 to the output of each linear layer.
         """
-        # TODO: these may be unneeded.
+        
         self.input_dim = input_dim
         self.neurons = neurons
         self.activations = activations
@@ -352,6 +343,7 @@ class MultiLayerNetwork(object):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
+
         self._layers = list()
 
         n_in = input_dim
@@ -382,7 +374,6 @@ class MultiLayerNetwork(object):
         #                       ** START OF YOUR CODE **
         #######################################################################
 
-        #print("*-- Init x =", x)
         current = x
         for layer in self._layers:
             current = layer.forward(current)
@@ -411,6 +402,7 @@ class MultiLayerNetwork(object):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
+
         current = grad_z
         for layer in self._layers[::-1]:
             current = layer.backward(current)
@@ -485,6 +477,7 @@ class Trainer(object):
             - shuffle_flag {bool} -- If True, training data is shuffled before
                 training.
         """
+
         self.network = network
         self.batch_size = batch_size
         self.nb_epoch = nb_epoch
@@ -495,6 +488,7 @@ class Trainer(object):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
+
         self._loss_layer = None
         if (self.loss_fun == "mse"):
             self._loss_layer = MSELossLayer()
@@ -523,6 +517,7 @@ class Trainer(object):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
+
         shuffled_indices = np.arange(len(input_dataset))
         np.random.shuffle(shuffled_indices)
         
@@ -557,6 +552,7 @@ class Trainer(object):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
+
         for epoch in range(self.nb_epoch):
 
             if (self.shuffle_flag):
@@ -599,6 +595,7 @@ class Trainer(object):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
+
         predictions = self.network(input_dataset)
         return self._loss_layer.forward(predictions, target_dataset)
 
@@ -625,6 +622,7 @@ class Preprocessor(object):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
+
         self.min_value = np.min(data, axis=0)
         self.max_value = np.max(data, axis=0)
        
@@ -692,11 +690,8 @@ def example_main():
     x_val = x[split_idx:]
     y_val = y[split_idx:]
 
-    
     prep_input = Preprocessor(x_train)
 
-    print(prep_input)
-    
     x_train_pre = prep_input.apply(x_train)
     x_val_pre = prep_input.apply(x_val)
 
@@ -719,47 +714,5 @@ def example_main():
     print("Validation accuracy: {}".format(accuracy))
 
 
-def main():
-    # layer = LinearLayer(3, 2)
-    x = np.array([5, 3, 4, 7, 8])
-    # print(x)
-    # y = layer.forward(x)
-    # print(y)
-
-    network = MultiLayerNetwork(
-        input_dim=5,
-        neurons=[8, 6, 2],
-        activations=["identity", "identity", "identity"]
-    )
-    y = network.forward(x)
-    N = 10
-    n_in = 5
-    import numpy.random as rand
-    rand.seed(1)
-    X = rand.rand(N, n_in)
-    grad_z = rand.rand(N, 2)
-
-    o1 = network.forward(X)
-    network.backward(grad_z)
-    network.update_params(0)
-    o2 = network.forward(X)
-    #print(np.isclose(o1,o2).all())
-
-    # print(y)
-    trainer = Trainer(
-    network=network,
-    batch_size=32,
-    nb_epoch=10,
-    learning_rate=1.0e-3,
-    shuffle_flag=True,
-    loss_fun="mse",
-    )
-    #trainer.train(train_inputs, train_targets)
-#print("Validation loss = ", trainer.eval_loss(val_inputs, val_targets))
-
-    return
-
-
 if __name__ == "__main__":
      example_main()
-    #main()
