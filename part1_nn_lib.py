@@ -239,8 +239,8 @@ class LinearLayer(Layer):
         self._b: np.ndarray = np.zeros((1, n_out))
 
         self._cache_current = None
-        self._grad_W_current = None
-        self._grad_b_current = None
+        self._grad_W_current: np.ndarray = None
+        self._grad_b_current: np.ndarray = None
 
         #######################################################################
         #                       ** END OF YOUR CODE **
@@ -308,8 +308,8 @@ class LinearLayer(Layer):
         #                       ** START OF YOUR CODE **
         #######################################################################
 
-        self._W -= learning_rate * self._grad_W_current
-        self._b -= learning_rate * self._grad_b_current
+        self._W = np.subtract(self._W, np.multiply(learning_rate, self._grad_W_current))
+        self._b = np.subtract(self._b, np.multiply(learning_rate, self._grad_b_current))
 
         #######################################################################
         #                       ** END OF YOUR CODE **
@@ -672,6 +672,10 @@ class Preprocessor(object):
 
 
 def example_main():
+    input_dim = 4
+    neurons = [16, 3]
+    activations = ["relu", "identity"]
+    net = MultiLayerNetwork(input_dim, neurons, activations)
 
     dat = np.loadtxt("iris.dat")
     np.random.shuffle(dat)
