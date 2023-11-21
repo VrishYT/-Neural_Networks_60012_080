@@ -6,10 +6,12 @@ from network import Network
 from sklearn.preprocessing import LabelBinarizer, Normalizer, MinMaxScaler, OneHotEncoder
 from sklearn.compose import ColumnTransformer
 from torch import nn
+import sys, traceback
+
 
 class Regressor():
 
-    def __init__(self, x, nb_epoch = 1000, hidden_layers = [], learning_rate = 1e-2, momentum = 0.9):
+    def __init__(self, x, nb_epoch=1000, hidden_layers=[], learning_rate=1e-2, momentum=0.9):
         # You can add any input parameters you need
         # Remember to set them with a default value for LabTS tests
         """ 
@@ -28,7 +30,7 @@ class Regressor():
         #######################################################################
 
         # Replace this code with your own
-        X, _ = self._preprocessor(x, training = True)
+        X, _ = self._preprocessor(x, training=True)
         self.input_size = X.shape[1]
         self.output_size = 1
         self.nb_epoch = nb_epoch
@@ -42,7 +44,7 @@ class Regressor():
         #                       ** END OF YOUR CODE **
         #######################################################################
 
-    def _preprocessor(self, x, y = None, training = False):
+    def _preprocessor(self, x, y=None, training=False):
         """ 
         Preprocess input of the network.
           
@@ -68,8 +70,10 @@ class Regressor():
         # Replace this code with your own
         # Return preprocessed x and y, return None for y if it was None
         z = x.fillna(0)
-        ct = ColumnTransformer ([
-            ("num", MinMaxScaler(), ["longitude","latitude","housing_median_age","total_rooms","total_bedrooms","population","households","median_income"]),
+        ct = ColumnTransformer([
+            ("num", MinMaxScaler(),
+             ["longitude", "latitude", "housing_median_age", "total_rooms", "total_bedrooms", "population",
+              "households", "median_income"]),
             ("cat", OneHotEncoder(handle_unknown="ignore"), ["ocean_proximity"])
         ])
         resx = ct.fit_transform(z)
@@ -77,17 +81,16 @@ class Regressor():
         resy = None
         if y is not None:
             m = y.fillna(0)
-            ct2 = ColumnTransformer ([
+            ct2 = ColumnTransformer([
                 ("num", MinMaxScaler(), ["median_house_value"])
             ])
-            resy = torch.from_numpy(ct2.fit_transform(m)) 
+            resy = torch.from_numpy(ct2.fit_transform(m))
         return torch.from_numpy(resx), resy
 
         #######################################################################
         #                       ** END OF YOUR CODE **
         #######################################################################
 
-        
     def fit(self, x, y):
         """
         Regressor training function
@@ -105,43 +108,48 @@ class Regressor():
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        
-        device = 'cpu'
-        if torch.cuda.is_available():
-            pass#device = 'cuda'
-        
-        #torch.randn((), device=device, dtype=torch.float64)
-        x_train_tensor, y_train_tensor = self._preprocessor(x, y = y, training = True) # Do not forget
-        x_train_tensor = x_train_tensor.to(device)
-        y_train_tensor = y_train_tensor.to(device)
 
-        # build a layer for each element in the hidden layer list
-        input_features = len(x_train_tensor[0])
-        output_features = 1
-        layers_for_network = [input_features] + self.hidden_layers + [output_features]
-        
-        self.network = Network(layers_for_network).to(device)
-        
-        for epoch in range(self.nb_epoch):
-            # Perform forward pass though the model given the input.
-            run = self.network(x_train_tensor)
-            # Compute the loss based on this forward pass.
-            mse_loss = nn.MSELoss()
-            result = mse_loss(run, y_train_tensor)
-            # Perform backwards pass to compute gradients of loss with respect to parameters of the model.
-            result.backward()
-            # Perform one step of gradient descent on the model parameters.
-            optimiser = torch.optim.SGD(self.network.parameters(), lr=self.learning_rate, momentum=self.momentum)
-            optimiser.step()
-            # You are free to implement any additional steps to improve learning (batch-learning, shuffling...).            
+        try:
+            device = 'cpu'
+            if torch.cuda.is_available():
+                pass  # device = 'cuda'
 
-        return self
+            # torch.randn((), device=device, dtype=torch.float64)
+            x_train_tensor, y_train_tensor = self._preprocessor(x, y=y, training=True)  # Do not forget
+            x_train_tensor = x_train_tensor.to(device)
+            y_train_tensor = y_train_tensor.to(device)
+
+            # build a layer for each element in the hidden layer list
+            input_features = len(x_train_tensor[0])
+            output_features = 1
+            layers_for_network = [input_features] + self.hidden_layers + [output_features]
+
+            self.network = Network(layers_for_network).to(device)
+
+            for epoch in range(self.nb_epoch):
+                # Perform forward pass though the model given the input.
+                run = self.network(x_train_tensor)
+                # Compute the loss based on this forward pass.
+                mse_loss = nn.MSELoss()
+                result = mse_loss(run, y_train_tensor)
+                # Perform backwards pass to compute gradients of loss with respect to parameters of the model.
+                result.backward()
+                # Perform one step of gradient descent on the model parameters.
+                optimiser = torch.optim.SGD(self.network.parameters(), lr=self.learning_rate, momentum=self.momentum)
+                optimiser.step()
+                # You are free to implement any additional steps to improve learning (batch-learning, shuffling...).
+
+            return self
+        except Exception:
+            print("Exception in user code:")
+            print("-" * 60)
+            traceback.print_exc(file=sys.stdout)
+            print("-" * 60)
 
         #######################################################################
         #                       ** END OF YOUR CODE **
         #######################################################################
 
-            
     def predict(self, x):
         """
         Output the value corresponding to an input x.
@@ -159,10 +167,16 @@ class Regressor():
         #                       ** START OF YOUR CODE **
         #######################################################################
 
-        X, _ = self._preprocessor(x, training = False) # Do not forget
-        with torch.no_grad():
-            y_predicted = self.network(X)
-        return y_predicted
+        try:
+            X, _ = self._preprocessor(x, training=False)  # Do not forget
+            with torch.no_grad():
+                y_predicted = self.network(X)
+            return y_predicted
+        except Exception:
+            print("Exception in user code:")
+            print("-" * 60)
+            traceback.print_exc(file=sys.stdout)
+            print("-" * 60)
 
         #######################################################################
         #                       ** END OF YOUR CODE **
@@ -186,22 +200,27 @@ class Regressor():
         #                       ** START OF YOUR CODE **
         #######################################################################
 
-        X, Y = self._preprocessor(x, y = y, training = False) # Do not forget
-        y_predicted = self.predict(x)
-        # call some kind of evaluation function on y_predicted and Y
-        mse_loss = nn.MSELoss()
-        result = mse_loss(y_predicted, Y)
-        # hmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm
-        # decide whether to micro or macro average these results
-        
-        return result # Replace this code with your own
+        try:
+            X, Y = self._preprocessor(x, y=y, training=False)  # Do not forget
+            y_predicted = self.predict(x)
+            # call some kind of evaluation function on y_predicted and Y
+            mse_loss = nn.MSELoss()
+            result = mse_loss(y_predicted, Y)
+
+            return result  # Replace this code with your own
+
+        except Exception:
+            print("Exception in user code:")
+            print("-" * 60)
+            traceback.print_exc(file=sys.stdout)
+            print("-" * 60)
 
         #######################################################################
         #                       ** END OF YOUR CODE **
         #######################################################################
 
 
-def save_regressor(trained_model): 
+def save_regressor(trained_model):
     """ 
     Utility function to save the trained regressor model in part2_model.pickle.
     """
@@ -211,7 +230,7 @@ def save_regressor(trained_model):
     print("\nSaved model in part2_model.pickle\n")
 
 
-def load_regressor(): 
+def load_regressor():
     """ 
     Utility function to load the trained regressor model in part2_model.pickle.
     """
@@ -222,8 +241,7 @@ def load_regressor():
     return trained_model
 
 
-
-def RegressorHyperParameterSearch(xTrain, xValidate, yValidate, mins, maxs, steps): 
+def RegressorHyperParameterSearch(xTrain, xValidate, yValidate, mins, maxs, steps):
     # Ensure to add whatever inputs you deem necessary to this function
     """
     Performs a hyper-parameter for fine-tuning the regressor implemented 
@@ -269,38 +287,38 @@ def RegressorHyperParameterSearch(xTrain, xValidate, yValidate, mins, maxs, step
 
     for nb_epoch in range(mins['nb_epoch'], maxs['nb_epoch'], steps['nb_epoch']):
         for nb_hidden_layers in range(mins['nb_hidden_layers'], maxs['nb_hidden_layers'], steps['nb_hidden_layers']):
-            array = genList(nb_hidden_layers, mins['hidden_layer_size'], maxs['hidden_layer_size'], steps['hidden_layer_size'])
+            array = genList(nb_hidden_layers, mins['hidden_layer_size'], maxs['hidden_layer_size'],
+                            steps['hidden_layer_size'])
             for hidden_layer_shape in array:
                 for learning_rate in range(mins['learning_rate'], maxs['learning_rate'], steps['learning_rate']):
                     for momentum in range(mins['momentum'], maxs['momentum'], steps['momentum']):
-                        regressor = Regressor(xTrain, nb_epoch=nb_epoch, hidden_layers=hidden_layer_shape, learning_rate=learning_rate, momentum=momentum)
+                        regressor = Regressor(xTrain, nb_epoch=nb_epoch, hidden_layers=hidden_layer_shape,
+                                              learning_rate=learning_rate, momentum=momentum)
                         # calculate loss of regressor
                         loss = regressor.score(xValidate, yValidate)
                         if currentLoss is None or loss < currentLoss:
                             currentLoss = loss
                             currentParams = {
-                                'nb_epoch': nb_epoch, 
+                                'nb_epoch': nb_epoch,
                                 'hidden_layers': hidden_layer_shape,
                                 'learning_rate': learning_rate,
                                 'momentum': momentum
                             }
 
-    return currentParams # Return the chosen hyper parameters
+    return currentParams  # Return the chosen hyper parameters
 
     #######################################################################
     #                       ** END OF YOUR CODE **
     #######################################################################
 
 
-
 def example_main():
-
     output_label = "median_house_value"
 
     # Use pandas to read CSV data as it contains various object types
     # Feel free to use another CSV reader tool
     # But remember that LabTS tests take Pandas DataFrame as inputs
-    data = pd.read_csv("housing.csv") 
+    data = pd.read_csv("housing.csv")
 
     # Splitting input and output
     x_train = data.loc[:, data.columns != output_label]
@@ -310,7 +328,7 @@ def example_main():
     # This example trains on the whole available dataset. 
     # You probably want to separate some held-out data 
     # to make sure the model isn't overfitting
-    regressor = Regressor(x_train, nb_epoch = 10)
+    regressor = Regressor(x_train, nb_epoch=10)
     regressor.fit(x_train, y_train)
     save_regressor(regressor)
 
@@ -321,4 +339,3 @@ def example_main():
 
 if __name__ == "__main__":
     example_main()
-
