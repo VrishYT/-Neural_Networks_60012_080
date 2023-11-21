@@ -2,7 +2,7 @@ from torch import nn
 
 class Network(nn.Module):
     def __init__(self, hidden_layers):
-        super().__init__()
+        super(Network, self).__init__()
         self.hidden_layer_shape = hidden_layers
         self.layers = self._hidden_layer_generator(hidden_layers)
         self.double()

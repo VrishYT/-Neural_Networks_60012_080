@@ -6,12 +6,13 @@ from network import Network
 from sklearn.preprocessing import LabelBinarizer, Normalizer, MinMaxScaler, OneHotEncoder
 from sklearn.compose import ColumnTransformer
 from sklearn.model_selection import train_test_split
+from sklearn.impute import SimpleImputer 
 from torch import nn
 
 
 class Regressor():
 
-    def __init__(self, x, nb_epoch=1000, hidden_layers=[16, 16], learning_rate=1e-2):
+    def __init__(self, x, nb_epoch=1500, hidden_layers=[14, 16, 7], learning_rate=0.1):
         # You can add any input parameters you need
         # Remember to set them with a default value for LabTS tests
         """ 
@@ -37,14 +38,17 @@ class Regressor():
               "households", "median_income"]),
             ("cat", OneHotEncoder(handle_unknown="ignore"), ["ocean_proximity"])
         ])
-        X, _ = self._preprocessor(x, training=True)
+        X = self._preprocessor(x, training=True)
         self.input_size: int = X.shape[1]
         self.output_size: int = 1
         self.nb_epoch: int = nb_epoch
         self.learning_rate: float = learning_rate
         self.hidden_layers = hidden_layers
         print("hidden layers", self.hidden_layers)
-        self.network: Network = None
+        layers_for_network = [self.input_size] + self.hidden_layers + [self.output_size]
+        self.network = Network(layers_for_network)
+        self.optimiser = torch.optim.Adam(self.network.parameters(), lr=self.learning_rate)
+        self.loss_func = nn.MSELoss()
 
         return
 
@@ -77,10 +81,18 @@ class Regressor():
 
         # Replace this code with your own
         # Return preprocessed x and y, return None for y if it was None
-        z = x.fillna(0)
 
-        # if training:
-        #     self.minMax = self.minMax.fit(z)
+        defaults = {"longitude": x["longitude"].mean(),
+                    "latitude": x["latitude"].mean(),
+                    "housing_median_age": x["housing_median_age"].mean(),
+                    "total_rooms": x["total_rooms"].mean(),
+                    "total_bedrooms": x["total_bedrooms"].mean(),
+                    "population" : x["population"].mean(),
+                    "households" : x["households"].mean(),
+                    "median_income" : x["median_income"].mean(),
+                    "ocean_proximity" : x["ocean_proximity"].mode()[0]}
+        
+        z = x.fillna(value=defaults)
 
         if training:
             self.ct = self.ct.fit(z)
@@ -89,10 +101,13 @@ class Regressor():
 
         resy = None
         if y is not None:
-            m = y.fillna(0)
-
-            resy = torch.from_numpy(self.minMax.fit_transform(m))
-        return torch.from_numpy(resx), resy
+            # imputer = SimpleImputer(missing_values=np.nan, strategy='mean')
+            y = y.fillna(y["median_house_value"].mean())
+            #m = self.minMax.fit_transform(y)
+            resy = torch.from_numpy(y.to_numpy())
+            print('resy', resy)
+        print('resx', resx)
+        return torch.from_numpy(resx)
 
         #######################################################################
         #                       ** END OF YOUR CODE **
@@ -116,22 +131,10 @@ class Regressor():
         #                       ** START OF YOUR CODE **
         #######################################################################
 
-        device = 'cpu'
-        if torch.cuda.is_available():
-            pass  # device = 'cuda'
-
-        # torch.randn((), device=device, dtype=torch.float64)
-        x_train_tensor, y_train_tensor = self._preprocessor(x, y=y, training=True)  # Do not forget
-        x_train_tensor = x_train_tensor.to(device)
-        y_train_tensor = y_train_tensor.to(device)
+        x_train_tensor = self._preprocessor(x, y=y, training=True)  # Do not forget
+        y_train_tensor = torch.tensor(y.values, dtype=torch.float64)
 
         # build a layer for each element in the hidden layer list
-        input_features = len(x_train_tensor[0])
-        output_features = 1
-        layers_for_network = [input_features] + self.hidden_layers + [output_features]
-        # print("layers", layers_for_network)
-
-        self.network = Network(layers_for_network).to(device)
 
         for epoch in range(self.nb_epoch):
             # Perform forward pass though the model given the input.
@@ -143,8 +146,7 @@ class Regressor():
             # Perform backwards pass to compute gradients of loss with respect to parameters of the model.
             result.backward()
             # Perform one step of gradient descent on the model parameters.
-            optimiser = torch.optim.SGD(self.network.parameters(), lr=self.learning_rate)
-            optimiser.step()
+            self.optimiser.step()
             # You are free to implement any additional steps to improve learning (batch-learning, shuffling...).
 
         return self
@@ -170,7 +172,7 @@ class Regressor():
         #                       ** START OF YOUR CODE **
         #######################################################################
 
-        X, _ = self._preprocessor(x, training=False)  # Do not forget
+        X = self._preprocessor(x, training=False)  # Do not forget
         with torch.no_grad():
             y_predicted = self.network(X)
         # print(y_predicted)
@@ -198,16 +200,14 @@ class Regressor():
         #                       ** START OF YOUR CODE **
         #######################################################################
 
-        _, Y = self._preprocessor(x, y=y, training=False)  # Do not forget
+        #_, Y = self._preprocessor(x, y=y, training=False)  # Do not forget
         y_predicted = self.predict(x)
         # call some kind of evaluation function on y_predicted and Y
-        mse_loss = nn.MSELoss()
-        # print('pretransform', y_predicted)
-        y_predicted = self.minMax.inverse_transform(y_predicted)
-        # print('posttransform', y_predicted)
-        result = mse_loss(torch.from_numpy(y_predicted), torch.from_numpy(self.minMax.inverse_transform(Y)))
+        
+        #y_predicted = self.minMax.inverse_transform(y_predicted)
+        print('posttransform', y_predicted)
+        result = self.loss_func(y_predicted, torch.from_numpy(y.to_numpy()))
 
-        # print(result)
         return np.sqrt(result)  # Replace this code with your own
 
         #######################################################################
@@ -327,18 +327,19 @@ def example_main():
 
     # nb_epoch, nb_hidden_layers, hidden_layer_size, learning_rate
     mins = {'nb_epoch': 1000, 'nb_hidden_layers': 2, 'hidden_layer_size': 14, 'learning_rate': 1}
-    maxs = {'nb_epoch': 1003, 'nb_hidden_layers': 4, 'hidden_layer_size': 18, 'learning_rate': 4}
+    maxs = {'nb_epoch': 1005, 'nb_hidden_layers': 6, 'hidden_layer_size': 20, 'learning_rate': 4}
     steps = {'nb_epoch': 1, 'nb_hidden_layers': 1, 'hidden_layer_size': 1, 'learning_rate': 1e-2}
 
 
-    best = RegressorHyperParameterSearch(x_train, y_train, x_test, y_test, mins, maxs, steps)
-    print('best', best)
+    # best = RegressorHyperParameterSearch(x_train, y_train, x_test, y_test, mins, maxs, steps)
+    # print('best', best)
 
     # Training
     # This example trains on the whole available dataset. 
     # You probably want to separate some held-out data 
     # to make sure the model isn't overfitting
-    regressor = Regressor(x_train, nb_epoch=10)
+    regressor = Regressor(x_train)
+    # regressor = Regressor(x_train, nb_epoch=best['nb_epoch'], hidden_layers=best['hidden_layers'], learning_rate=best['learning_rate'])
     regressor.fit(x_train, y_train)
     save_regressor(regressor)
 
