@@ -644,7 +644,7 @@ class Preprocessor(object):
         #                       ** START OF YOUR CODE **
         #######################################################################
 
-        return np.divide(np.subtract(data, self.min_value), np.subtract(self.max_value, self.min_value))
+        return np.abs(np.divide(np.subtract(data, self.min_value), np.subtract(self.max_value, self.min_value)))
 
         #######################################################################
         #                       ** END OF YOUR CODE **
