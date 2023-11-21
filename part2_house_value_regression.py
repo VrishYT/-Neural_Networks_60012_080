@@ -175,7 +175,7 @@ class Regressor():
         X = self._preprocessor(x, training=False)  # Do not forget
         with torch.no_grad():
             y_predicted = self.network(X)
-        # print(y_predicted)
+        print(y_predicted)
         return y_predicted
 
         #######################################################################
@@ -322,7 +322,7 @@ def example_main():
     x_train = data.loc[:, data.columns != output_label]
     y_train = data.loc[:, [output_label]]
 
-    x_train, x_test, y_train, y_test = train_test_split(x_train, y_train)
+    x_train, x_test, y_train, y_test = train_test_split(x_train, y_train, test_size=0.2)
 
 
     # nb_epoch, nb_hidden_layers, hidden_layer_size, learning_rate
