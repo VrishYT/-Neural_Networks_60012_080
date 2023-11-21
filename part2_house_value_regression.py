@@ -134,6 +134,8 @@ class Regressor():
         #######################################################################
 
         X, Y = self._preprocessor(x, y=y, training=True)  # Do not forget
+        self.trainer.train(X, Y)
+
         return self
 
         #######################################################################
@@ -158,7 +160,7 @@ class Regressor():
         #######################################################################
 
         X, _ = self._preprocessor(x, training=False)  # Do not forget
-        pass
+        return self.network(X)
 
         #######################################################################
         #                       ** END OF YOUR CODE **
@@ -183,7 +185,7 @@ class Regressor():
         #######################################################################
 
         X, Y = self._preprocessor(x, y=y, training=False)  # Do not forget
-        return 0  # Replace this code with your own
+        return self.trainer.eval_loss(X, Y)
 
         #######################################################################
         #                       ** END OF YOUR CODE **
