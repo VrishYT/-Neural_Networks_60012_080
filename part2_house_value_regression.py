@@ -2,16 +2,10 @@ import torch
 import pickle
 import numpy as np
 import pandas as pd
-from network import Network
-from sklearn.preprocessing import LabelBinarizer, Normalizer, MinMaxScaler, OneHotEncoder
-from sklearn.compose import ColumnTransformer
-from sklearn.model_selection import train_test_split
-from torch import nn
-
 
 class Regressor():
 
-    def __init__(self, x, nb_epoch=1000, hidden_layers=[], learning_rate=1e-2):
+    def __init__(self, x, nb_epoch = 1000):
         # You can add any input parameters you need
         # Remember to set them with a default value for LabTS tests
         """ 
@@ -30,29 +24,17 @@ class Regressor():
         #######################################################################
 
         # Replace this code with your own
-        self.minMax = MinMaxScaler()
-        self.ct = ColumnTransformer([
-            ("num", self.minMax,
-             ["longitude", "latitude", "housing_median_age", "total_rooms", "total_bedrooms", "population",
-              "households", "median_income"]),
-            ("cat", OneHotEncoder(handle_unknown="ignore"), ["ocean_proximity"])
-        ])
-        X, _ = self._preprocessor(x, training=True)
-        self.input_size: int = X.shape[1]
-        self.output_size: int = 1
-        self.nb_epoch: int = nb_epoch
-        self.learning_rate: float = learning_rate
-        self.hidden_layers = hidden_layers
-        print("hidden layers", self.hidden_layers)
-        self.network: Network = None
-
+        X, _ = self._preprocessor(x, training = True)
+        self.input_size = X.shape[1]
+        self.output_size = 1
+        self.nb_epoch = nb_epoch 
         return
 
         #######################################################################
         #                       ** END OF YOUR CODE **
         #######################################################################
 
-    def _preprocessor(self, x: pd.DataFrame, y: pd.DataFrame = None, training: bool = False):
+    def _preprocessor(self, x, y = None, training = False):
         """ 
         Preprocess input of the network.
           
@@ -77,29 +59,13 @@ class Regressor():
 
         # Replace this code with your own
         # Return preprocessed x and y, return None for y if it was None
-        z = x.fillna(0)
-
-        # if training:
-        #     self.minMax = self.minMax.fit(z)
-
-        if training:
-            self.ct = self.ct.fit(z)
-
-        resx = self.ct.transform(z)
-
-        resy = None
-        if y is not None:
-            m = y.fillna(0)
-            #ct2 = self.minMax
-
-            #resy = torch.from_numpy(ct2.fit_transform(m) if training else ct2.transform(m))
-            resy = torch.from_numpy(self.minMax.fit_transform(m))
-        return torch.from_numpy(resx), resy
+        return x, (y if isinstance(y, pd.DataFrame) else None)
 
         #######################################################################
         #                       ** END OF YOUR CODE **
         #######################################################################
 
+        
     def fit(self, x, y):
         """
         Regressor training function
@@ -118,43 +84,14 @@ class Regressor():
         #                       ** START OF YOUR CODE **
         #######################################################################
 
-        device = 'cpu'
-        if torch.cuda.is_available():
-            pass  # device = 'cuda'
-
-        # torch.randn((), device=device, dtype=torch.float64)
-        x_train_tensor, y_train_tensor = self._preprocessor(x, y=y, training=True)  # Do not forget
-        x_train_tensor = x_train_tensor.to(device)
-        y_train_tensor = y_train_tensor.to(device)
-
-        # build a layer for each element in the hidden layer list
-        input_features = len(x_train_tensor[0])
-        output_features = 1
-        layers_for_network = [input_features] + self.hidden_layers + [output_features]
-        print("layers", layers_for_network)
-
-        self.network = Network(layers_for_network).to(device)
-
-        for epoch in range(self.nb_epoch):
-            # Perform forward pass though the model given the input.
-            print("x_train_tensor", x_train_tensor.size())
-            run = self.network(x_train_tensor)
-            # Compute the loss based on this forward pass.
-            mse_loss = nn.MSELoss()
-            result = mse_loss(run, y_train_tensor)
-            # Perform backwards pass to compute gradients of loss with respect to parameters of the model.
-            result.backward()
-            # Perform one step of gradient descent on the model parameters.
-            optimiser = torch.optim.SGD(self.network.parameters(), lr=self.learning_rate)
-            optimiser.step()
-            # You are free to implement any additional steps to improve learning (batch-learning, shuffling...).
-
+        X, Y = self._preprocessor(x, y = y, training = True) # Do not forget
         return self
 
         #######################################################################
         #                       ** END OF YOUR CODE **
         #######################################################################
 
+            
     def predict(self, x):
         """
         Output the value corresponding to an input x.
@@ -172,11 +109,8 @@ class Regressor():
         #                       ** START OF YOUR CODE **
         #######################################################################
 
-        X, _ = self._preprocessor(x, training=False)  # Do not forget
-        with torch.no_grad():
-            y_predicted = self.network(X)
-        print(y_predicted)
-        return y_predicted
+        X, _ = self._preprocessor(x, training = False) # Do not forget
+        pass
 
         #######################################################################
         #                       ** END OF YOUR CODE **
@@ -200,21 +134,15 @@ class Regressor():
         #                       ** START OF YOUR CODE **
         #######################################################################
 
-        _, Y = self._preprocessor(x, y=y, training=False)  # Do not forget
-        y_predicted = self.predict(x)
-        # call some kind of evaluation function on y_predicted and Y
-        mse_loss = nn.MSELoss()
-        result = mse_loss(y_predicted, Y)
-
-        print(result)
-        return result  # Replace this code with your own
+        X, Y = self._preprocessor(x, y = y, training = False) # Do not forget
+        return 0 # Replace this code with your own
 
         #######################################################################
         #                       ** END OF YOUR CODE **
         #######################################################################
 
 
-def save_regressor(trained_model):
+def save_regressor(trained_model): 
     """ 
     Utility function to save the trained regressor model in part2_model.pickle.
     """
@@ -224,7 +152,7 @@ def save_regressor(trained_model):
     print("\nSaved model in part2_model.pickle\n")
 
 
-def load_regressor():
+def load_regressor(): 
     """ 
     Utility function to load the trained regressor model in part2_model.pickle.
     """
@@ -235,23 +163,15 @@ def load_regressor():
     return trained_model
 
 
-def RegressorHyperParameterSearch(xTrain, xValidate, yValidate, mins, maxs, steps):
+
+def RegressorHyperParameterSearch(): 
     # Ensure to add whatever inputs you deem necessary to this function
     """
     Performs a hyper-parameter for fine-tuning the regressor implemented 
     in the Regressor class.
 
-    // TODO: add typedef for Params type - https://stackoverflow.com/questions/69446189/python-equivalent-for-typedef
-
     Arguments:
-        - x {pd.DataFrame} -- Raw input array of shape 
-                (batch_size, input_size).
-        - mins {dict[str, float]} -- Minimum values for each HP:
-            nb_epoch, nb_hidden_layers, hidden_layer_size, learning_rate
-        - maxs {dict[str, float]} -- Maximum values for each HP:
-            nb_epoch, nb_hidden_layers, hidden_layer_size, learning_rate
-        - steps {dict[str, float]} -- Step sizes for each HP:
-            nb_epoch, nb_hidden_layers, hidden_layer_size, learning_rate
+        Add whatever inputs you need.
         
     Returns:
         The function should return your optimised hyper-parameters. 
@@ -262,76 +182,40 @@ def RegressorHyperParameterSearch(xTrain, xValidate, yValidate, mins, maxs, step
     #                       ** START OF YOUR CODE **
     #######################################################################
 
-    # tune hyperparams
-    '''
-    We have nb_epoch, hidden layer shape and learning_rate as HPs
-    '''
-
-    def genList(n, min, max, step):
-        possibilities = (max - min) / step
-        array = np.zeros((n, possibilities))
-
-        for i in range(n):
-            for j, hidden_layer_size in enumerate(range(min, max, step)):
-                array[i][j] = hidden_layer_size
-
-        return array
-
-    # check nb_epoch
-    currentLoss = None
-    currentParams = None
-
-    for nb_epoch in range(mins['nb_epoch'], maxs['nb_epoch'], steps['nb_epoch']):
-        for nb_hidden_layers in range(mins['nb_hidden_layers'], maxs['nb_hidden_layers'], steps['nb_hidden_layers']):
-            array = genList(nb_hidden_layers, mins['hidden_layer_size'], maxs['hidden_layer_size'],
-                            steps['hidden_layer_size'])
-            for hidden_layer_shape in array:
-                for learning_rate in range(mins['learning_rate'], maxs['learning_rate'], steps['learning_rate']):
-                    regressor = Regressor(xTrain, nb_epoch=nb_epoch, hidden_layers=hidden_layer_shape,
-                                          learning_rate=learning_rate)
-                    # calculate loss of regressor
-                    loss = regressor.score(xValidate, yValidate)
-                    if currentLoss is None or loss < currentLoss:
-                        currentLoss = loss
-                        currentParams = {
-                            'nb_epoch': nb_epoch,
-                            'hidden_layers': hidden_layer_shape,
-                            'learning_rate': learning_rate
-                        }
-
-    return currentParams  # Return the chosen hyper parameters
+    return  # Return the chosen hyper parameters
 
     #######################################################################
     #                       ** END OF YOUR CODE **
     #######################################################################
 
 
+
 def example_main():
+
     output_label = "median_house_value"
 
     # Use pandas to read CSV data as it contains various object types
     # Feel free to use another CSV reader tool
     # But remember that LabTS tests take Pandas DataFrame as inputs
-    data = pd.read_csv("housing.csv")
+    data = pd.read_csv("housing.csv") 
 
     # Splitting input and output
     x_train = data.loc[:, data.columns != output_label]
     y_train = data.loc[:, [output_label]]
 
-    x_train, x_test, y_train, y_test = train_test_split(x_train, y_train)
-
     # Training
     # This example trains on the whole available dataset. 
     # You probably want to separate some held-out data 
     # to make sure the model isn't overfitting
-    regressor = Regressor(x_train, nb_epoch=10)
+    regressor = Regressor(x_train, nb_epoch = 10)
     regressor.fit(x_train, y_train)
     save_regressor(regressor)
 
     # Error
-    error = regressor.score(x_test, y_test)
+    error = regressor.score(x_train, y_train)
     print("\nRegressor error: {}\n".format(error))
 
 
 if __name__ == "__main__":
     example_main()
+
