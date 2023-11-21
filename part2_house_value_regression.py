@@ -34,6 +34,7 @@ class Regressor():
         # Replace this code with your own
         self.nb_epoch: int = nb_epoch
         self.mean_std = {}
+        self.preprocessor = None
 
         pro_x, _ = self._preprocessor(x, training=True)
         self.input_size = pro_x.shape[1]
@@ -79,35 +80,19 @@ class Regressor():
         #                       ** START OF YOUR CODE **
         #######################################################################
 
-        numerical_cols = x.select_dtypes(include=np.number).columns
+        def fillMissing(*datas):
+            for data in datas:
+                for col in data.select_dtypes(include=np.number).columns:
+                    data[:, col] = data[col].fillna(data[col].mean())
+
+        fillMissing(x, y)
+        x = x.to_numpy()
+        y = y.to_numpy()
 
         if training:
-            for col in numerical_cols:
-                self.mean_std[col] = {
-                    'mean': x[col].mean(),
-                    'std': x[col].std()
-                }
-            for col in x.select_dtypes(exclude=np.number).columns:
-                self.mean_std[col] = {
-                    'mode': x[col].mode()[0]
-                }
+            self.preprocessor = nn.Preprocessor(x)
 
-        for col in x.columns:
-            if col in self.mean_std and 'mean' in self.mean_std[col]:
-                x.loc[:, col] = x[col].fillna(self.mean_std[col]['mean'])
-            else:
-                x.loc[:, col] = x[col].fillna(self.mean_std[col]['mode'])
-
-        for col in numerical_cols:
-            x.loc[:, col] = (x[col] - self.mean_std[col]['mean']) / self.mean_std[col]['std']
-
-        x = pd.get_dummies(x, columns=list(x.select_dtypes(include='object').columns))
-        x = x.to_numpy()
-
-        if y is not None:
-            for col in y.columns:
-                y.loc[:, col] = y[col].fillna(y[col].mean())
-            y = y.to_numpy()
+        x = self.preprocessor.apply(x)
 
         return x, y
 
