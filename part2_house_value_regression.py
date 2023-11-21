@@ -6,12 +6,11 @@ from network import Network
 from sklearn.preprocessing import LabelBinarizer, Normalizer, MinMaxScaler, OneHotEncoder
 from sklearn.compose import ColumnTransformer
 from torch import nn
-import sys, traceback
 
 
 class Regressor():
 
-    def __init__(self, x, nb_epoch=1000, hidden_layers=[], learning_rate=1e-2, momentum=0.9):
+    def __init__(self, x, nb_epoch=1000, hidden_layers=[], learning_rate=1e-2):
         # You can add any input parameters you need
         # Remember to set them with a default value for LabTS tests
         """ 
@@ -31,13 +30,12 @@ class Regressor():
 
         # Replace this code with your own
         X, _ = self._preprocessor(x, training=True)
-        self.input_size = X.shape[1]
-        self.output_size = 1
-        self.nb_epoch = nb_epoch
-        self.learning_rate = learning_rate
+        self.input_size: int = X.shape[1]
+        self.output_size: int = 1
+        self.nb_epoch: int = nb_epoch
+        self.learning_rate: float = learning_rate
         self.hidden_layers = hidden_layers
-        self.momentum = momentum
-        self.network = None
+        self.network: Network = None
         return
 
         #######################################################################
@@ -109,43 +107,37 @@ class Regressor():
         #                       ** START OF YOUR CODE **
         #######################################################################
 
-        try:
-            device = 'cpu'
-            if torch.cuda.is_available():
-                pass  # device = 'cuda'
+        device = 'cpu'
+        if torch.cuda.is_available():
+            pass  # device = 'cuda'
 
-            # torch.randn((), device=device, dtype=torch.float64)
-            x_train_tensor, y_train_tensor = self._preprocessor(x, y=y, training=True)  # Do not forget
-            x_train_tensor = x_train_tensor.to(device)
-            y_train_tensor = y_train_tensor.to(device)
+        # torch.randn((), device=device, dtype=torch.float64)
+        x_train_tensor, y_train_tensor = self._preprocessor(x, y=y, training=True)  # Do not forget
+        x_train_tensor = x_train_tensor.to(device)
+        y_train_tensor = y_train_tensor.to(device)
 
-            # build a layer for each element in the hidden layer list
-            input_features = len(x_train_tensor[0])
-            output_features = 1
-            layers_for_network = [input_features] + self.hidden_layers + [output_features]
+        # build a layer for each element in the hidden layer list
+        input_features = len(x_train_tensor[0])
+        output_features = 1
+        layers_for_network = [input_features] + self.hidden_layers + [output_features]
 
-            self.network = Network(layers_for_network).to(device)
+        self.network = Network(layers_for_network).to(device)
 
-            for epoch in range(self.nb_epoch):
-                # Perform forward pass though the model given the input.
-                run = self.network(x_train_tensor)
-                # Compute the loss based on this forward pass.
-                mse_loss = nn.MSELoss()
-                result = mse_loss(run, y_train_tensor)
-                # Perform backwards pass to compute gradients of loss with respect to parameters of the model.
-                result.backward()
-                # Perform one step of gradient descent on the model parameters.
-                optimiser = torch.optim.SGD(self.network.parameters(), lr=self.learning_rate, momentum=self.momentum)
-                optimiser.step()
-                # You are free to implement any additional steps to improve learning (batch-learning, shuffling...).
+        for epoch in range(self.nb_epoch):
+            # Perform forward pass though the model given the input.
+            run = self.network(x_train_tensor)
+            # Compute the loss based on this forward pass.
+            mse_loss = nn.MSELoss()
+            result = mse_loss(run, y_train_tensor)
+            # Perform backwards pass to compute gradients of loss with respect to parameters of the model.
+            result.backward()
+            # Perform one step of gradient descent on the model parameters.
+            optimiser = torch.optim.SGD(self.network.parameters(), lr=self.learning_rate)
+            optimiser.step()
+            # You are free to implement any additional steps to improve learning (batch-learning, shuffling...).
 
-            # print(self)
-            return self
-        except Exception:
-            print("Exception in user code:")
-            print("-" * 60)
-            traceback.print_exc(file=sys.stdout)
-            print("-" * 60)
+        # print(self)
+        return self
 
         #######################################################################
         #                       ** END OF YOUR CODE **
@@ -168,17 +160,11 @@ class Regressor():
         #                       ** START OF YOUR CODE **
         #######################################################################
 
-        try:
-            X, _ = self._preprocessor(x, training=False)  # Do not forget
-            with torch.no_grad():
-                y_predicted = self.network(X)
-            print(y_predicted)
-            return y_predicted
-        except Exception:
-            print("Exception in user code:")
-            print("-" * 60)
-            traceback.print_exc(file=sys.stdout)
-            print("-" * 60)
+        X, _ = self._preprocessor(x, training=False)  # Do not forget
+        with torch.no_grad():
+            y_predicted = self.network(X)
+        print(y_predicted)
+        return y_predicted
 
         #######################################################################
         #                       ** END OF YOUR CODE **
@@ -202,21 +188,14 @@ class Regressor():
         #                       ** START OF YOUR CODE **
         #######################################################################
 
-        try:
-            X, Y = self._preprocessor(x, y=y, training=False)  # Do not forget
-            y_predicted = self.predict(x)
-            # call some kind of evaluation function on y_predicted and Y
-            mse_loss = nn.MSELoss()
-            result = mse_loss(y_predicted, Y)
+        X, Y = self._preprocessor(x, y=y, training=False)  # Do not forget
+        y_predicted = self.predict(x)
+        # call some kind of evaluation function on y_predicted and Y
+        mse_loss = nn.MSELoss()
+        result = mse_loss(y_predicted, Y)
 
-            print(result)
-            return result  # Replace this code with your own
-
-        except Exception:
-            print("Exception in user code:")
-            print("-" * 60)
-            traceback.print_exc(file=sys.stdout)
-            print("-" * 60)
+        print(result)
+        return result  # Replace this code with your own
 
         #######################################################################
         #                       ** END OF YOUR CODE **
@@ -250,15 +229,17 @@ def RegressorHyperParameterSearch(xTrain, xValidate, yValidate, mins, maxs, step
     Performs a hyper-parameter for fine-tuning the regressor implemented 
     in the Regressor class.
 
+    // TODO: add typedef for Params type - https://stackoverflow.com/questions/69446189/python-equivalent-for-typedef
+
     Arguments:
         - x {pd.DataFrame} -- Raw input array of shape 
                 (batch_size, input_size).
         - mins {dict[str, float]} -- Minimum values for each HP:
-            nb_epoch, nb_hidden_layers, hidden_layer_size, learning_rate, momentum
+            nb_epoch, nb_hidden_layers, hidden_layer_size, learning_rate
         - maxs {dict[str, float]} -- Maximum values for each HP:
-            nb_epoch, nb_hidden_layers, hidden_layer_size, learning_rate, momentum
+            nb_epoch, nb_hidden_layers, hidden_layer_size, learning_rate
         - steps {dict[str, float]} -- Step sizes for each HP:
-            nb_epoch, nb_hidden_layers, hidden_layer_size, learning_rate, momentum
+            nb_epoch, nb_hidden_layers, hidden_layer_size, learning_rate
         
     Returns:
         The function should return your optimised hyper-parameters. 
@@ -271,7 +252,7 @@ def RegressorHyperParameterSearch(xTrain, xValidate, yValidate, mins, maxs, step
 
     # tune hyperparams
     '''
-    We have nb_epoch, hidden layer shape, learning_rate, and momentum as HPs
+    We have nb_epoch, hidden layer shape and learning_rate as HPs
     '''
 
     def genList(n, min, max, step):
@@ -294,19 +275,17 @@ def RegressorHyperParameterSearch(xTrain, xValidate, yValidate, mins, maxs, step
                             steps['hidden_layer_size'])
             for hidden_layer_shape in array:
                 for learning_rate in range(mins['learning_rate'], maxs['learning_rate'], steps['learning_rate']):
-                    for momentum in range(mins['momentum'], maxs['momentum'], steps['momentum']):
-                        regressor = Regressor(xTrain, nb_epoch=nb_epoch, hidden_layers=hidden_layer_shape,
-                                              learning_rate=learning_rate, momentum=momentum)
-                        # calculate loss of regressor
-                        loss = regressor.score(xValidate, yValidate)
-                        if currentLoss is None or loss < currentLoss:
-                            currentLoss = loss
-                            currentParams = {
-                                'nb_epoch': nb_epoch,
-                                'hidden_layers': hidden_layer_shape,
-                                'learning_rate': learning_rate,
-                                'momentum': momentum
-                            }
+                    regressor = Regressor(xTrain, nb_epoch=nb_epoch, hidden_layers=hidden_layer_shape,
+                                          learning_rate=learning_rate)
+                    # calculate loss of regressor
+                    loss = regressor.score(xValidate, yValidate)
+                    if currentLoss is None or loss < currentLoss:
+                        currentLoss = loss
+                        currentParams = {
+                            'nb_epoch': nb_epoch,
+                            'hidden_layers': hidden_layer_shape,
+                            'learning_rate': learning_rate
+                        }
 
     return currentParams  # Return the chosen hyper parameters
 
