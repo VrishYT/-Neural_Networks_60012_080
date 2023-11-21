@@ -223,7 +223,7 @@ def load_regressor():
 
 
 
-def RegressorHyperParameterSearch(x, mins, maxs, steps): 
+def RegressorHyperParameterSearch(xTrain, xValidate, yValidate, mins, maxs, steps): 
     # Ensure to add whatever inputs you deem necessary to this function
     """
     Performs a hyper-parameter for fine-tuning the regressor implemented 
@@ -252,18 +252,40 @@ def RegressorHyperParameterSearch(x, mins, maxs, steps):
     '''
     We have nb_epoch, hidden layer shape, learning_rate, and momentum as HPs
     '''
+
+    def genList(n, min, max, step):
+        possibilities = (max - min) / step
+        array = np.zeros((n, possibilities))
+
+        for i in range(n):
+            for j, hidden_layer_size in enumerate(range(min, max, step)):
+                array[i][j] = hidden_layer_size
+
+        return array
+
     # check nb_epoch
+    currentLoss = None
+    currentParams = None
+
     for nb_epoch in range(mins['nb_epoch'], maxs['nb_epoch'], steps['nb_epoch']):
         for nb_hidden_layers in range(mins['nb_hidden_layers'], maxs['nb_hidden_layers'], steps['nb_hidden_layers']):
-            for i in range(nb_hidden_layers):
-                for hidden_layer_size in range(mins['hidden_layer_size'], maxs['hidden_layer_size'], steps['hidden_layer_size']):
-                    for learning_rate in range(mins['learning_rate'], maxs['learning_rate'], steps['learning_rate']):
-                        for momentum in range(mins['momentum'], maxs['momentum'], steps['momentum']):
+            array = genList(nb_hidden_layers, mins['hidden_layer_size'], maxs['hidden_layer_size'], steps['hidden_layer_size'])
+            for hidden_layer_shape in array:
+                for learning_rate in range(mins['learning_rate'], maxs['learning_rate'], steps['learning_rate']):
+                    for momentum in range(mins['momentum'], maxs['momentum'], steps['momentum']):
+                        regressor = Regressor(xTrain, nb_epoch=nb_epoch, hidden_layers=hidden_layer_shape, learning_rate=learning_rate, momentum=momentum)
+                        # calculate loss of regressor
+                        loss = regressor.score(xValidate, yValidate)
+                        if currentLoss is None or loss < currentLoss:
+                            currentLoss = loss
+                            currentParams = {
+                                'nb_epoch': nb_epoch, 
+                                'hidden_layers': hidden_layer_shape,
+                                'learning_rate': learning_rate,
+                                'momentum': momentum
+                            }
 
-            
-    regressor = Regressor(x, )
-
-    return  # Return the chosen hyper parameters
+    return currentParams # Return the chosen hyper parameters
 
     #######################################################################
     #                       ** END OF YOUR CODE **
