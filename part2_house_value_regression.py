@@ -5,6 +5,7 @@ import pandas as pd
 from network import Network
 from sklearn.preprocessing import LabelBinarizer, Normalizer, MinMaxScaler, OneHotEncoder
 from sklearn.compose import ColumnTransformer
+from sklearn.model_selection import train_test_split
 from torch import nn
 
 
@@ -29,20 +30,29 @@ class Regressor():
         #######################################################################
 
         # Replace this code with your own
+        self.minMax = MinMaxScaler()
+        self.ct = ColumnTransformer([
+            ("num", self.minMax,
+             ["longitude", "latitude", "housing_median_age", "total_rooms", "total_bedrooms", "population",
+              "households", "median_income"]),
+            ("cat", OneHotEncoder(handle_unknown="ignore"), ["ocean_proximity"])
+        ])
         X, _ = self._preprocessor(x, training=True)
         self.input_size: int = X.shape[1]
         self.output_size: int = 1
         self.nb_epoch: int = nb_epoch
         self.learning_rate: float = learning_rate
         self.hidden_layers = hidden_layers
+        print("hidden layers", self.hidden_layers)
         self.network: Network = None
+
         return
 
         #######################################################################
         #                       ** END OF YOUR CODE **
         #######################################################################
 
-    def _preprocessor(self, x, y=None, training=False):
+    def _preprocessor(self, x: pd.DataFrame, y: pd.DataFrame = None, training: bool = False):
         """ 
         Preprocess input of the network.
           
@@ -68,21 +78,22 @@ class Regressor():
         # Replace this code with your own
         # Return preprocessed x and y, return None for y if it was None
         z = x.fillna(0)
-        ct = ColumnTransformer([
-            ("num", MinMaxScaler(),
-             ["longitude", "latitude", "housing_median_age", "total_rooms", "total_bedrooms", "population",
-              "households", "median_income"]),
-            ("cat", OneHotEncoder(handle_unknown="ignore"), ["ocean_proximity"])
-        ])
-        resx = ct.fit_transform(z)
+
+        # if training:
+        #     self.minMax = self.minMax.fit(z)
+
+        if training:
+            self.ct = self.ct.fit(z)
+
+        resx = self.ct.transform(z)
 
         resy = None
         if y is not None:
             m = y.fillna(0)
-            ct2 = ColumnTransformer([
-                ("num", MinMaxScaler(), ["median_house_value"])
-            ])
-            resy = torch.from_numpy(ct2.fit_transform(m))
+            #ct2 = self.minMax
+
+            #resy = torch.from_numpy(ct2.fit_transform(m) if training else ct2.transform(m))
+            resy = torch.from_numpy(self.minMax.fit_transform(m))
         return torch.from_numpy(resx), resy
 
         #######################################################################
@@ -120,11 +131,13 @@ class Regressor():
         input_features = len(x_train_tensor[0])
         output_features = 1
         layers_for_network = [input_features] + self.hidden_layers + [output_features]
+        print("layers", layers_for_network)
 
         self.network = Network(layers_for_network).to(device)
 
         for epoch in range(self.nb_epoch):
             # Perform forward pass though the model given the input.
+            print("x_train_tensor", x_train_tensor.size())
             run = self.network(x_train_tensor)
             # Compute the loss based on this forward pass.
             mse_loss = nn.MSELoss()
@@ -136,7 +149,6 @@ class Regressor():
             optimiser.step()
             # You are free to implement any additional steps to improve learning (batch-learning, shuffling...).
 
-        # print(self)
         return self
 
         #######################################################################
@@ -188,7 +200,7 @@ class Regressor():
         #                       ** START OF YOUR CODE **
         #######################################################################
 
-        X, Y = self._preprocessor(x, y=y, training=False)  # Do not forget
+        _, Y = self._preprocessor(x, y=y, training=False)  # Do not forget
         y_predicted = self.predict(x)
         # call some kind of evaluation function on y_predicted and Y
         mse_loss = nn.MSELoss()
@@ -306,6 +318,8 @@ def example_main():
     x_train = data.loc[:, data.columns != output_label]
     y_train = data.loc[:, [output_label]]
 
+    x_train, x_test, y_train, y_test = train_test_split(x_train, y_train)
+
     # Training
     # This example trains on the whole available dataset. 
     # You probably want to separate some held-out data 
@@ -315,7 +329,7 @@ def example_main():
     save_regressor(regressor)
 
     # Error
-    error = regressor.score(x_train, y_train)
+    error = regressor.score(x_test, y_test)
     print("\nRegressor error: {}\n".format(error))
 
 
