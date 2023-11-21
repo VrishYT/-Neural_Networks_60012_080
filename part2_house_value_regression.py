@@ -189,9 +189,12 @@ class Regressor():
         X, Y = self._preprocessor(x, y = y, training = False) # Do not forget
         y_predicted = self.predict(x)
         # call some kind of evaluation function on y_predicted and Y
+        mse_loss = nn.MSELoss()
+        result = mse_loss(y_predicted, Y)
+        # hmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm
         # decide whether to micro or macro average these results
         
-        return 0 # Replace this code with your own
+        return result # Replace this code with your own
 
         #######################################################################
         #                       ** END OF YOUR CODE **
@@ -220,14 +223,21 @@ def load_regressor():
 
 
 
-def RegressorHyperParameterSearch(): 
+def RegressorHyperParameterSearch(x, mins, maxs, steps): 
     # Ensure to add whatever inputs you deem necessary to this function
     """
     Performs a hyper-parameter for fine-tuning the regressor implemented 
     in the Regressor class.
 
     Arguments:
-        Add whatever inputs you need.
+        - x {pd.DataFrame} -- Raw input array of shape 
+                (batch_size, input_size).
+        - mins {dict[str, float]} -- Minimum values for each HP:
+            nb_epoch, nb_hidden_layers, hidden_layer_size, learning_rate, momentum
+        - maxs {dict[str, float]} -- Maximum values for each HP:
+            nb_epoch, nb_hidden_layers, hidden_layer_size, learning_rate, momentum
+        - steps {dict[str, float]} -- Step sizes for each HP:
+            nb_epoch, nb_hidden_layers, hidden_layer_size, learning_rate, momentum
         
     Returns:
         The function should return your optimised hyper-parameters. 
@@ -240,8 +250,19 @@ def RegressorHyperParameterSearch():
 
     # tune hyperparams
     '''
-    we have nb_epoch, hidden layer shape, learning_rate, and momentum as HPs
+    We have nb_epoch, hidden layer shape, learning_rate, and momentum as HPs
     '''
+    # check nb_epoch
+    for nb_epoch in range(mins['nb_epoch'], maxs['nb_epoch'], steps['nb_epoch']):
+        for nb_hidden_layers in range(mins['nb_hidden_layers'], maxs['nb_hidden_layers'], steps['nb_hidden_layers']):
+            for i in range(nb_hidden_layers):
+                for hidden_layer_size in range(mins['hidden_layer_size'], maxs['hidden_layer_size'], steps['hidden_layer_size']):
+                    for learning_rate in range(mins['learning_rate'], maxs['learning_rate'], steps['learning_rate']):
+                        for momentum in range(mins['momentum'], maxs['momentum'], steps['momentum']):
+
+            
+    regressor = Regressor(x, )
+
     return  # Return the chosen hyper parameters
 
     #######################################################################
