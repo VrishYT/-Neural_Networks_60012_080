@@ -92,8 +92,9 @@ class Regressor():
         if y is not None:
             y = y.to_numpy()
 
-        if training:
-            self.preprocessor = nn.Preprocessor(x)
+        #if training:
+            
+        self.preprocessor = nn.Preprocessor(x)
 
         x = self.preprocessor.apply(x)
         print("x", x)
