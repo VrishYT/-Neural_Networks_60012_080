@@ -139,6 +139,7 @@ class Regressor():
                 optimiser.step()
                 # You are free to implement any additional steps to improve learning (batch-learning, shuffling...).
 
+            # print(self)
             return self
         except Exception:
             print("Exception in user code:")
@@ -171,6 +172,7 @@ class Regressor():
             X, _ = self._preprocessor(x, training=False)  # Do not forget
             with torch.no_grad():
                 y_predicted = self.network(X)
+            print(y_predicted)
             return y_predicted
         except Exception:
             print("Exception in user code:")
@@ -207,6 +209,7 @@ class Regressor():
             mse_loss = nn.MSELoss()
             result = mse_loss(y_predicted, Y)
 
+            print(result)
             return result  # Replace this code with your own
 
         except Exception:
