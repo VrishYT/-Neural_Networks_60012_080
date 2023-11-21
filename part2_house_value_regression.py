@@ -11,7 +11,7 @@ from torch import nn
 
 class Regressor():
 
-    def __init__(self, x, nb_epoch=1000, hidden_layers=[], learning_rate=1e-2):
+    def __init__(self, x, nb_epoch=1000, hidden_layers=[16, 16], learning_rate=1e-2):
         # You can add any input parameters you need
         # Remember to set them with a default value for LabTS tests
         """ 
@@ -90,9 +90,7 @@ class Regressor():
         resy = None
         if y is not None:
             m = y.fillna(0)
-            #ct2 = self.minMax
 
-            #resy = torch.from_numpy(ct2.fit_transform(m) if training else ct2.transform(m))
             resy = torch.from_numpy(self.minMax.fit_transform(m))
         return torch.from_numpy(resx), resy
 
@@ -131,13 +129,13 @@ class Regressor():
         input_features = len(x_train_tensor[0])
         output_features = 1
         layers_for_network = [input_features] + self.hidden_layers + [output_features]
-        print("layers", layers_for_network)
+        # print("layers", layers_for_network)
 
         self.network = Network(layers_for_network).to(device)
 
         for epoch in range(self.nb_epoch):
             # Perform forward pass though the model given the input.
-            print("x_train_tensor", x_train_tensor.size())
+            # print("x_train_tensor", x_train_tensor.size())
             run = self.network(x_train_tensor)
             # Compute the loss based on this forward pass.
             mse_loss = nn.MSELoss()
@@ -175,7 +173,7 @@ class Regressor():
         X, _ = self._preprocessor(x, training=False)  # Do not forget
         with torch.no_grad():
             y_predicted = self.network(X)
-        print(y_predicted)
+        # print(y_predicted)
         return y_predicted
 
         #######################################################################
@@ -204,10 +202,13 @@ class Regressor():
         y_predicted = self.predict(x)
         # call some kind of evaluation function on y_predicted and Y
         mse_loss = nn.MSELoss()
-        result = mse_loss(y_predicted, Y)
+        # print('pretransform', y_predicted)
+        y_predicted = self.minMax.inverse_transform(y_predicted)
+        # print('posttransform', y_predicted)
+        result = mse_loss(torch.from_numpy(y_predicted), torch.from_numpy(self.minMax.inverse_transform(Y)))
 
-        print(result)
-        return result  # Replace this code with your own
+        # print(result)
+        return np.sqrt(result)  # Replace this code with your own
 
         #######################################################################
         #                       ** END OF YOUR CODE **
@@ -235,7 +236,7 @@ def load_regressor():
     return trained_model
 
 
-def RegressorHyperParameterSearch(xTrain, xValidate, yValidate, mins, maxs, steps):
+def RegressorHyperParameterSearch(xTrain, yTrain, xValidate, yValidate, mins, maxs, steps):
     # Ensure to add whatever inputs you deem necessary to this function
     """
     Performs a hyper-parameter for fine-tuning the regressor implemented 
@@ -269,16 +270,17 @@ def RegressorHyperParameterSearch(xTrain, xValidate, yValidate, mins, maxs, step
 
     def genList(n, min, max, step):
         possibilities = (max - min) / step
-        array = np.zeros((n, possibilities))
+        array = np.zeros((int(possibilities), int(n)), dtype=int)
 
         for i in range(n):
             for j, hidden_layer_size in enumerate(range(min, max, step)):
-                array[i][j] = hidden_layer_size
+                array[j][i] = hidden_layer_size
 
-        return array
+        print('array', array)
+        return array.tolist()
 
     # check nb_epoch
-    currentLoss = None
+    currentLoss = False
     currentParams = None
 
     for nb_epoch in range(mins['nb_epoch'], maxs['nb_epoch'], steps['nb_epoch']):
@@ -286,12 +288,14 @@ def RegressorHyperParameterSearch(xTrain, xValidate, yValidate, mins, maxs, step
             array = genList(nb_hidden_layers, mins['hidden_layer_size'], maxs['hidden_layer_size'],
                             steps['hidden_layer_size'])
             for hidden_layer_shape in array:
-                for learning_rate in range(mins['learning_rate'], maxs['learning_rate'], steps['learning_rate']):
+                for learning_rate in range(mins['learning_rate'], maxs['learning_rate']):
+                    learning_rate *= steps['learning_rate']
                     regressor = Regressor(xTrain, nb_epoch=nb_epoch, hidden_layers=hidden_layer_shape,
                                           learning_rate=learning_rate)
+                    regressor.fit(xTrain, yTrain)
                     # calculate loss of regressor
                     loss = regressor.score(xValidate, yValidate)
-                    if currentLoss is None or loss < currentLoss:
+                    if (currentLoss == False) or (loss < currentLoss):
                         currentLoss = loss
                         currentParams = {
                             'nb_epoch': nb_epoch,
@@ -319,6 +323,16 @@ def example_main():
     y_train = data.loc[:, [output_label]]
 
     x_train, x_test, y_train, y_test = train_test_split(x_train, y_train)
+
+
+    # nb_epoch, nb_hidden_layers, hidden_layer_size, learning_rate
+    mins = {'nb_epoch': 1000, 'nb_hidden_layers': 2, 'hidden_layer_size': 14, 'learning_rate': 1}
+    maxs = {'nb_epoch': 1003, 'nb_hidden_layers': 4, 'hidden_layer_size': 18, 'learning_rate': 4}
+    steps = {'nb_epoch': 1, 'nb_hidden_layers': 1, 'hidden_layer_size': 1, 'learning_rate': 1e-2}
+
+
+    best = RegressorHyperParameterSearch(x_train, y_train, x_test, y_test, mins, maxs, steps)
+    print('best', best)
 
     # Training
     # This example trains on the whole available dataset. 
