@@ -175,7 +175,7 @@ class Regressor():
         X = self._preprocessor(x, training=False)  # Do not forget
         with torch.no_grad():
             y_predicted = self.network(X)
-        print(y_predicted)
+        print("predicted", y_predicted)
         return y_predicted
 
         #######################################################################
