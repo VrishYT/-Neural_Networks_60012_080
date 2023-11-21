@@ -96,6 +96,8 @@ class Regressor():
             self.preprocessor = nn.Preprocessor(x)
 
         x = self.preprocessor.apply(x)
+        print("x", x)
+        print("y", y)
 
         return x, y
 
