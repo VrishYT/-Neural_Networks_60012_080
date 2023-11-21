@@ -36,7 +36,6 @@ class Regressor():
         self.mean_std = {}
 
         pro_x, _ = self._preprocessor(x, training=True)
-        print(pro_x)
         self.input_size = pro_x.shape[1]
         self.output_size = 1
         self.batch_size = 1
@@ -57,7 +56,7 @@ class Regressor():
         #                       ** END OF YOUR CODE **
         #######################################################################
 
-    def _preprocessor(self, x: pd.DataFrame, y: pd.DataFrame = None, training: bool = False):
+    def _preprocessor(self, x, y = None, training: bool = False):
         """ 
         Preprocess input of the network.
           
@@ -103,7 +102,14 @@ class Regressor():
             x.loc[:, col] = (x[col] - self.mean_std[col]['mean']) / self.mean_std[col]['std']
 
         x = pd.get_dummies(x, columns=list(x.select_dtypes(include='object').columns))
-        return x.to_numpy(), y if y is None else y.to_numpy()
+        x = x.to_numpy()
+
+        if y is not None:
+            for col in y.columns:
+                y.loc[:, col] = y[col].fillna(y[col].mean())
+            y = y.to_numpy()
+
+        return x, y
 
         #######################################################################
         #                       ** END OF YOUR CODE **
