@@ -3,6 +3,7 @@ import pickle
 import numpy as np
 import pandas as pd
 from sklearn.preprocessing import LabelBinarizer
+from sklearn.model_selection import train_test_split
 import part1_nn_lib as nn
 
 
@@ -216,7 +217,7 @@ def load_regressor():
     return trained_model
 
 
-def RegressorHyperParameterSearch():
+def RegressorHyperParameterSearch(xTrain, yTrain, xValidate, yValidate, mins, maxs, steps):
     # Ensure to add whatever inputs you deem necessary to this function
     """
     Performs a hyper-parameter for fine-tuning the regressor implemented 
@@ -227,12 +228,42 @@ def RegressorHyperParameterSearch():
         
     Returns:
         The function should return your optimised hyper-parameters. 
+        nb_epoch: int = 1000,
+        learning_rate: float = 1e-2,
+        shuffle: bool = False,
+        batch_size: int = 1
 
     """
 
     #######################################################################
     #                       ** START OF YOUR CODE **
     #######################################################################
+    
+    currentLoss = False
+    currentParams = None
+    
+    for nb_epoch in range(mins['nb_epoch'], maxs['nb_epoch'], steps['nb_epoch']):
+        for learning_rate in range(mins['learning_rate'], maxs['learning_rate']):
+            learning_rate *= steps['learning_rate']
+            for shuffle in [True, False]:
+                for batch_size in range(mins['batch_size'], maxs['batch_size'], steps['batch_size']):
+                    regressor = Regressor(xTrain, nb_epoch=nb_epoch,
+                                            learning_rate=learning_rate,
+                                            batch_size=batch_size, shuffle=shuffle)
+                    regressor.fit(xTrain, yTrain)
+                    # calculate loss of regressor
+                    loss = regressor.score(xValidate, yValidate)
+                    if (currentLoss == False) or (loss < currentLoss):
+                        currentLoss = loss
+                        currentParams = {
+                            'nb_epoch': nb_epoch,
+                            'batch_size': batch_size,
+                            'learning_rate': learning_rate,
+                            'shuffle': shuffle
+                        }
+
+    return currentParams  # Return the chosen hyper parameters
+
 
     return  # Return the chosen hyper parameters
 
@@ -252,12 +283,21 @@ def example_main():
     # Splitting input and output
     x_train = data.loc[:, data.columns != output_label]
     y_train = data.loc[:, [output_label]]
+    
+    x_train, x_test, y_train, y_test = train_test_split(x_train, y_train)
+    
+    # HP Tune
+    mins = {'nb_epoch': 1000, 'batch_size': 1, 'learning_rate': 1}
+    maxs = {'nb_epoch': 1500, 'batch_size': 3, 'learning_rate': 6}
+    steps = {'nb_epoch': 50, 'batch_size': 1, 'learning_rate': 5e-3}
+    best = RegressorHyperParameterSearch(x_train, y_train, x_test, y_test, mins, maxs, steps)
+    
 
     # Training
     # This example trains on the whole available dataset. 
     # You probably want to separate some held-out data 
     # to make sure the model isn't overfitting
-    regressor = Regressor(x_train, nb_epoch=10)
+    regressor = Regressor(x_train, nb_epoch=best['nb_epoch'], batch_size=best['batch_size'], learning_rate=['learning_rate'])
     regressor.fit(x_train, y_train)
     save_regressor(regressor)
 
