@@ -14,7 +14,8 @@ class Regressor():
                  nb_epoch: int = 1000,
                  learning_rate: float = 1e-2,
                  shuffle: bool = False,
-                 batch_size: int = 100):
+                 batch_size: int = 100,
+                 output_size: int = 1):
         # You can add any input parameters you need
         # Remember to set them with a default value for LabTS tests
         """ 
@@ -34,17 +35,17 @@ class Regressor():
 
         # Replace this code with your own
         self.nb_epoch: int = nb_epoch
-        self.mean_std = {}
         self.preprocessor = None
-        self.stored_classes = None
         pro_x, _ = self._preprocessor(x, training=True)
+
         self.input_size = pro_x.shape[1]
-        self.output_size = 1
-        self.batch_size = 1
+        self.output_size = output_size
+        self.batch_size = batch_size
         self.learning_rate = learning_rate
         self.shuffle = shuffle
+        self.stored_classes = None
 
-        self.network = nn.MultiLayerNetwork(self.input_size, [128, 64, 1], ["relu"] * 3)
+        self.network = nn.MultiLayerNetwork(self.input_size, [128, 64, output_size], ["relu"] * 3)
         self.trainer = nn.Trainer(
             self.network,
             batch_size,
@@ -58,8 +59,8 @@ class Regressor():
         #                       ** END OF YOUR CODE **
         #######################################################################
 
-    def _preprocessor(self, x, y = None, training: bool = False):
-        
+    def _preprocessor(self, x, y=None, training: bool = False):
+
         """ 
         Preprocess input of the network.
         
@@ -76,34 +77,39 @@ class Regressor():
             size (batch_size, 1).
             
         """
+
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        def fillMissing(*datas):
+        def fill_missing_nums(*datas):
             for data in datas:
                 if data is not None:
-                    for col in data.select_dtypes(include=np.number).columns:
+                    for col in data.columns:
                         data.loc[:, col] = data[col].fillna(data[col].mean())
-                    for col in data.select_dtypes(include="object").columns:
-                        data.loc[:, col] = data[col].fillna(data[col].mode()[0])
 
-        fillMissing(x, y)
-        fit_lb = None 
+        numerical_cols = data.select_dtypes(include='number')
+        categorical_cols = data.select_dtypes(include='object')
+
+        # Fill missing data
+        fill_missing_nums(numerical_cols, y)
+        for col in categorical_cols.columns:
+            categorical_cols.loc[:, col] = categorical_cols[col].fillna(categorical_cols[col].mode()[0])
+
+        fit_lb = None
         if training:
             lb = LabelBinarizer()
-            fit_lb = lb.fit(x["ocean_proximity"])
+            fit_lb = lb.fit(categorical_cols)
             self.stored_classes = fit_lb.classes_
         else:
             fit_lb = LabelBinarizer()
             fit_lb.classes_ = self.stored_classes
-        
-        one_hot_encoded_data = fit_lb.transform(x["ocean_proximity"])
-  
-        x_number_columns = x.select_dtypes(include=np.number)
-        if training:    
-            self.preprocessor = nn.Preprocessor(x_number_columns)
-        
-        preprocessed_x = self.preprocessor.apply(x_number_columns)
+
+        one_hot_encoded_data = fit_lb.transform(categorical_cols)
+
+        if training:
+            self.preprocessor = nn.Preprocessor(numerical_cols)
+
+        preprocessed_x = self.preprocessor.apply(numerical_cols)
 
         result_x = np.concatenate((preprocessed_x, one_hot_encoded_data), axis=1)
 
@@ -249,7 +255,7 @@ def RegressorHyperParameterSearch(xTrain, yTrain, xValidate, yValidate, mins, ma
     #######################################################################
     #                       ** START OF YOUR CODE **
     #######################################################################
-    
+
     # currentLoss = False
     # currentParams = None
     # print("jashtye")
@@ -267,7 +273,7 @@ def RegressorHyperParameterSearch(xTrain, yTrain, xValidate, yValidate, mins, ma
     #                                         batch_size=batch_size, shuffle=shuffle)
     #                 print("para palestres")
     #                 regressor.fit(xTrain, yTrain)
-                    
+
     #                 print("pas palestres")
     #                 # calculate loss of regressor
     #                 loss = regressor.score(xValidate, yValidate)
@@ -295,16 +301,18 @@ def RegressorHyperParameterSearch(xTrain, yTrain, xValidate, yValidate, mins, ma
     for nb_epoch in range(mins['nb_epoch'], maxs['nb_epoch'], steps['nb_epoch']):
         for learning_rate in range(mins['learning_rate'], maxs['learning_rate']):
             learning_rate *= steps['learning_rate']
-            for nr_hidden_layers in range(mins['nr_hidden_layers'], maxs['nr_hidden_layers'], steps['nr_hidden_layers']):
+            for nr_hidden_layers in range(mins['nr_hidden_layers'], maxs['nr_hidden_layers'],
+                                          steps['nr_hidden_layers']):
                 for hidden_layer_size in range(mins['hidden_layer_size'], maxs['hidden_layer_size']):
                     hidden_layer_size *= steps['hidden_layer_size']
                     for activation_function in ["relu", "sigmoid"]:
 
-                        
                         regressor = Regressor(xTrain, nb_epoch=nb_epoch,
-                                                learning_rate=learning_rate,
-                                                )
-                        regressor.network = nn.MultiLayerNetwork(regressor.input_size, [hidden_layer_size] * int(nr_hidden_layers), [activation_function] * int(nr_hidden_layers))
+                                              learning_rate=learning_rate,
+                                              )
+                        regressor.network = nn.MultiLayerNetwork(regressor.input_size,
+                                                                 [hidden_layer_size] * int(nr_hidden_layers),
+                                                                 [activation_function] * int(nr_hidden_layers))
                         regressor.fit(xTrain, yTrain)
 
                         # calculate loss of regressor
@@ -312,12 +320,12 @@ def RegressorHyperParameterSearch(xTrain, yTrain, xValidate, yValidate, mins, ma
 
                         print("loosi", loss)
                         print("se ca mutin", {
-                                'nb_epoch': nb_epoch,
-                                'hidden_layer_size': hidden_layer_size,
-                                'learning_rate': learning_rate,
-                                'nr_hidden_layers': nr_hidden_layers,
-                                'activation_function': activation_function
-                            })
+                            'nb_epoch': nb_epoch,
+                            'hidden_layer_size': hidden_layer_size,
+                            'learning_rate': learning_rate,
+                            'nr_hidden_layers': nr_hidden_layers,
+                            'activation_function': activation_function
+                        })
                         if (currentLoss == False) or (loss < currentLoss):
                             currentLoss = loss
                             currentParams = {
@@ -331,7 +339,6 @@ def RegressorHyperParameterSearch(xTrain, yTrain, xValidate, yValidate, mins, ma
                         print("current params ", currentParams)
 
     return currentParams  # Return the chosen hyper parameters
-
 
     return  # Return the chosen hyper parameters
 
@@ -351,9 +358,9 @@ def example_main():
     # Splitting input and output
     x_train = data.loc[:, data.columns != output_label]
     y_train = data.loc[:, [output_label]]
-    
+
     x_train, x_test, y_train, y_test = train_test_split(x_train, y_train)
-    
+
     # HP Tune
     mins = {'nb_epoch': 1000, 'batch_size': 1, 'learning_rate': 1, 'nr_hidden_layers': 1, 'hidden_layer_size': 32}
     maxs = {'nb_epoch': 1500, 'batch_size': 3, 'learning_rate': 6, 'nr_hidden_layers': 4, 'hidden_layer_size': 1024}
@@ -366,7 +373,8 @@ def example_main():
     # This example trains on the whole available dataset. 
     # You probably want to separate some held-out data 
     # to make sure the model isn't overfitting
-    regressor = Regressor(x_train, nb_epoch=best['nb_epoch'], batch_size=best['batch_size'], learning_rate=['learning_rate'])
+    regressor = Regressor(x_train, nb_epoch=best['nb_epoch'], batch_size=best['batch_size'],
+                          learning_rate=['learning_rate'])
     regressor.fit(x_train, y_train)
     save_regressor(regressor)
 
