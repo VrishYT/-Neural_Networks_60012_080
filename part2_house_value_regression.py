@@ -2,7 +2,7 @@ import torch
 import pickle
 import numpy as np
 import pandas as pd
-
+from sklearn.preprocessing import LabelBinarizer
 import part1_nn_lib as nn
 
 
@@ -35,7 +35,7 @@ class Regressor():
         self.nb_epoch: int = nb_epoch
         self.mean_std = {}
         self.preprocessor = None
-
+        self.stored_classes = None
         pro_x, _ = self._preprocessor(x, training=True)
         self.input_size = pro_x.shape[1]
         self.output_size = 1
@@ -80,28 +80,67 @@ class Regressor():
         #                       ** START OF YOUR CODE **
         #######################################################################
 
+        # print("before", x)
+        # print("before", y)
+
         def fillMissing(*datas):
             for data in datas:
                 if data is not None:
                     for col in data.select_dtypes(include=np.number).columns:
                         data.loc[:, col] = data[col].fillna(data[col].mean())
                     for col in data.select_dtypes(include="object").columns:
-                        data.loc[:, col] = data[col].fillna("missing")
+                        data.loc[:, col] = data[col].fillna(data[col].mode()[0])
 
         fillMissing(x, y)
-        x = pd.get_dummies(x, columns=list(x.select_dtypes(include='object').columns))
-        x = x.to_numpy()
+        fit_lb = None 
+        if training:
+            lb = LabelBinarizer()
+            fit_lb = lb.fit(x["ocean_proximity"])
+            self.stored_classes = fit_lb.classes_
+        else:
+            fit_lb = LabelBinarizer()
+            fit_lb.classes_ = self.stored_classes
+        
+        one_hot_encoded_data = fit_lb.transform(x["ocean_proximity"])
+        #print("one_hot_encoded_data", one_hot_encoded_data)
+        # one_hot_encoded_df = pd.DataFrame(one_hot_encoded_data, columns=fit_lb.classes_)
+        # print("one_hot_encoded_df", one_hot_encoded_df)
+        x_number_columns = x.select_dtypes(include=np.number)
+        if training:    
+            self.preprocessor = nn.Preprocessor(x_number_columns)
+        
+        preprocessed_x = self.preprocessor.apply(x_number_columns)
+
+        result_x = np.concatenate((preprocessed_x, one_hot_encoded_data), axis=1)
+        print(result_x.shape)
+
         if y is not None:
             y = y.to_numpy()
 
-        if training:    
-            self.preprocessor = nn.Preprocessor(x)
+        #print(preprocessed_x)
+        # x = pd.get_dummies(x, columns=list(x.select_dtypes(include='object').columns))
+        # column_types = dict(x.dtypes)
+        # keys = list(column_types.keys())
+        # x = x.to_numpy()
 
-        x = self.preprocessor.apply(x)
-        print("x", x)
-        print("y", y)
+        # idx_IN_columns = [col for col in keys  if i]
+        # # print("x   ", x)
+        # for col in x.select_dtypes(include=np.number).columns:
+        #     print("columns of x ", x[col])
+        #     np.append(x_number_columns, x[col], axis=1)
 
-        return x, y
+        # x_object_cols = []
+
+        # for col in x.select_dtypes(exclude=np.number).columns:
+        #     x_object_cols.append(x[col])
+
+        # print("x number cols", x_number_columns)
+        # print("x object, ", x_object_cols)
+
+        
+        # print("x pre processed", x)
+
+        return result_x, y
 
         #######################################################################
         #                       ** END OF YOUR CODE **
