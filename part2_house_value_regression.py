@@ -85,6 +85,8 @@ class Regressor():
                 if data is not None:
                     for col in data.select_dtypes(include=np.number).columns:
                         data.loc[:, col] = data[col].fillna(data[col].mean())
+                    for col in data.select_dtypes(include="object").columns:
+                        data.loc[:, col] = data[col].fillna("missing")
 
         fillMissing(x, y)
         x = pd.get_dummies(x, columns=list(x.select_dtypes(include='object').columns))
@@ -92,9 +94,8 @@ class Regressor():
         if y is not None:
             y = y.to_numpy()
 
-        #if training:
-            
-        self.preprocessor = nn.Preprocessor(x)
+        if training:    
+            self.preprocessor = nn.Preprocessor(x)
 
         x = self.preprocessor.apply(x)
         print("x", x)
