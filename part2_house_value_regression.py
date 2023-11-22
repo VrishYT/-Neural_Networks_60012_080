@@ -78,32 +78,6 @@ class Regressor():
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        # try:
-        #     def fillMissing(*datas):
-        #         for data in datas:
-        #             if data is not None:
-        #                 for col in data.select_dtypes(include=np.number).columns:
-        #                     data.loc[:, col] = data[col].fillna(data[col].mean())
-        #                 for col in data.select_dtypes(include="object").columns:
-        #                     data.loc[:, col] = data[col].fillna("missing")
-
-        #     fillMissing(x, y)
-        #     x = pd.get_dummies(x, columns=list(x.select_dtypes(include='object').columns))
-        #     x = x.to_numpy()
-        #     if y is not None:
-        #         y = y.to_numpy()
-
-        #     if training:    
-        #         self.preprocessor = nn.Preprocessor(x)
-
-        #     x = self.preprocessor.apply(x)
-        #     print("x", np.any((x < 0)|(x > 1 )))
-        #     # print("y", np.any((y < 0)|(y > 1 )))
-        # except e:
-        #     print(e)
-
-        # return x, y
-
         def fillMissing(*datas):
             for data in datas:
                 if data is not None:
