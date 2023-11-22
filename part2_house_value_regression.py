@@ -58,30 +58,51 @@ class Regressor():
         #######################################################################
 
     def _preprocessor(self, x, y = None, training: bool = False):
+        
         """ 
         Preprocess input of the network.
-          
+        
         Arguments:
             - x {pd.DataFrame} -- Raw input array of shape 
                 (batch_size, input_size).
             - y {pd.DataFrame} -- Raw target array of shape (batch_size, 1).
             - training {boolean} -- Boolean indicating if we are training or 
                 testing the model.
-
         Returns:
             - {torch.tensor} or {numpy.ndarray} -- Preprocessed input array of
-              size (batch_size, input_size). The input_size does not have to be the same as the input_size for x above.
+            size (batch_size, input_size). The input_size does not have to be the same as the input_size for x above.
             - {torch.tensor} or {numpy.ndarray} -- Preprocessed target array of
-              size (batch_size, 1).
+            size (batch_size, 1).
             
         """
-
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
+        # try:
+        #     def fillMissing(*datas):
+        #         for data in datas:
+        #             if data is not None:
+        #                 for col in data.select_dtypes(include=np.number).columns:
+        #                     data.loc[:, col] = data[col].fillna(data[col].mean())
+        #                 for col in data.select_dtypes(include="object").columns:
+        #                     data.loc[:, col] = data[col].fillna("missing")
 
-        # print("before", x)
-        # print("before", y)
+        #     fillMissing(x, y)
+        #     x = pd.get_dummies(x, columns=list(x.select_dtypes(include='object').columns))
+        #     x = x.to_numpy()
+        #     if y is not None:
+        #         y = y.to_numpy()
+
+        #     if training:    
+        #         self.preprocessor = nn.Preprocessor(x)
+
+        #     x = self.preprocessor.apply(x)
+        #     print("x", np.any((x < 0)|(x > 1 )))
+        #     # print("y", np.any((y < 0)|(y > 1 )))
+        # except e:
+        #     print(e)
+
+        # return x, y
 
         def fillMissing(*datas):
             for data in datas:
@@ -116,29 +137,6 @@ class Regressor():
 
         if y is not None:
             y = y.to_numpy()
-
-        #print(preprocessed_x)
-        # x = pd.get_dummies(x, columns=list(x.select_dtypes(include='object').columns))
-        # column_types = dict(x.dtypes)
-        # keys = list(column_types.keys())
-        # x = x.to_numpy()
-
-        # idx_IN_columns = [col for col in keys  if i]
-        # # print("x   ", x)
-        # for col in x.select_dtypes(include=np.number).columns:
-        #     print("columns of x ", x[col])
-        #     np.append(x_number_columns, x[col], axis=1)
-
-        # x_object_cols = []
-
-        # for col in x.select_dtypes(exclude=np.number).columns:
-        #     x_object_cols.append(x[col])
-
-        # print("x number cols", x_number_columns)
-        # print("x object, ", x_object_cols)
-
-        
-        # print("x pre processed", x)
 
         return result_x, y
 
