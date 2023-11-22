@@ -11,11 +11,14 @@ class Regressor():
 
     def __init__(self,
                  x: pd.DataFrame,
-                 nb_epoch: int = 1000,
-                 learning_rate: float = 1e-2,
+                 nb_epoch: int = 100,
+                 learning_rate: float = 0.1,
                  shuffle: bool = False,
                  batch_size: int = 100,
-                 output_size: int = 1):
+                 activation_function="relu",
+                 no_hidden_layers: int = 2,
+                 hidden_layer_size: int = 128,
+                 ):
         # You can add any input parameters you need
         # Remember to set them with a default value for LabTS tests
         """ 
@@ -39,13 +42,14 @@ class Regressor():
         pro_x, _ = self._preprocessor(x, training=True)
 
         self.input_size = pro_x.shape[1]
-        self.output_size = output_size
         self.batch_size = batch_size
         self.learning_rate = learning_rate
         self.shuffle = shuffle
         self.stored_classes = None
+        self.output_size = 1
 
-        self.network = nn.MultiLayerNetwork(self.input_size, [128, 64, output_size], ["relu"] * 3)
+        self.network = nn.MultiLayerNetwork(self.input_size, [hidden_layer_size] * no_hidden_layers,
+                                            [activation_function] * 3)
         self.trainer = nn.Trainer(
             self.network,
             batch_size,
@@ -192,7 +196,7 @@ class Regressor():
         #######################################################################
 
         X, Y = self._preprocessor(x, y=y, training=False)  # Do not forget
-        result = np.sqrt(self.trainer.eval_loss(X, Y))
+        result = self.trainer.eval_loss(X, Y)
 
         return result
 
@@ -222,7 +226,7 @@ def load_regressor():
     return trained_model
 
 
-def RegressorHyperParameterSearch(xTrain, yTrain, xValidate, yValidate, mins, maxs, steps):
+def RegressorHyperParameterSearch(xTrain, yTrain, xValidate, yValidate):
     # Ensure to add whatever inputs you deem necessary to this function
     """
     Performs a hyper-parameter for fine-tuning the regressor implemented 
@@ -244,91 +248,46 @@ def RegressorHyperParameterSearch(xTrain, yTrain, xValidate, yValidate, mins, ma
     #                       ** START OF YOUR CODE **
     #######################################################################
 
-    # currentLoss = False
-    # currentParams = None
-    # print("jashtye")
-    # for nb_epoch in range(mins['nb_epoch'], maxs['nb_epoch'], steps['nb_epoch']):
-    #     print("ne epoch")
-    #     for learning_rate in range(mins['learning_rate'], maxs['learning_rate']):
-    #         print("learn")
-    #         learning_rate *= steps['learning_rate']
-    #         for shuffle in [True, False]:
-    #             print("shuf")
-    #             for batch_size in range(mins['batch_size'], maxs['batch_size'], steps['batch_size']):
-    #                 print("batchi")
-    #                 regressor = Regressor(xTrain, nb_epoch=nb_epoch,
-    #                                         learning_rate=learning_rate,
-    #                                         batch_size=batch_size, shuffle=shuffle)
-    #                 print("para palestres")
-    #                 regressor.fit(xTrain, yTrain)
+    minLoss = False
+    minParams = None
 
-    #                 print("pas palestres")
-    #                 # calculate loss of regressor
-    #                 loss = regressor.score(xValidate, yValidate)
-
-    #                 print("loosi", loss)
-    #                 print("se ca mutin", {
-    #                         'nb_epoch': nb_epoch,
-    #                         'batch_size': batch_size,
-    #                         'learning_rate': learning_rate,
-    #                         'shuffle': shuffle
-    #                     })
-    #                 if (currentLoss == False) or (loss < currentLoss):
-    #                     currentLoss = loss
-    #                     currentParams = {
-    #                         'nb_epoch': nb_epoch,
-    #                         'batch_size': batch_size,
-    #                         'learning_rate': learning_rate,
-    #                         'shuffle': shuffle
-    #                     }
-    #                 print("current loss ", currentLoss)
-    #                 print("current params ", currentParams)
-    currentLoss = False
-    currentParams = None
-
-    for nb_epoch in range(mins['nb_epoch'], maxs['nb_epoch'], steps['nb_epoch']):
-        for learning_rate in range(mins['learning_rate'], maxs['learning_rate']):
-            learning_rate *= steps['learning_rate']
-            for nr_hidden_layers in range(mins['nr_hidden_layers'], maxs['nr_hidden_layers'],
-                                          steps['nr_hidden_layers']):
-                for hidden_layer_size in range(mins['hidden_layer_size'], maxs['hidden_layer_size']):
-                    hidden_layer_size *= steps['hidden_layer_size']
+    for nb_epoch in [10**i for i in range(1,4)]:
+        for learning_rate in [10**(-i) for i in range(1,6)]:
+            for nr_hidden_layers in range(1,5):
+                for hidden_layer_size in [2**i for i in range(1,11)]:
                     for activation_function in ["relu", "sigmoid"]:
+                        for shuffle in [True, False]:
 
-                        regressor = Regressor(xTrain, nb_epoch=nb_epoch,
-                                              learning_rate=learning_rate,
-                                              )
-                        regressor.network = nn.MultiLayerNetwork(regressor.input_size,
-                                                                 [hidden_layer_size] * int(nr_hidden_layers),
-                                                                 [activation_function] * int(nr_hidden_layers))
-                        regressor.fit(xTrain, yTrain)
-
-                        # calculate loss of regressor
-                        loss = regressor.score(xValidate, yValidate)
-
-                        print("loosi", loss)
-                        print("se ca mutin", {
-                            'nb_epoch': nb_epoch,
-                            'hidden_layer_size': hidden_layer_size,
-                            'learning_rate': learning_rate,
-                            'nr_hidden_layers': nr_hidden_layers,
-                            'activation_function': activation_function
-                        })
-                        if (currentLoss == False) or (loss < currentLoss):
-                            currentLoss = loss
                             currentParams = {
                                 'nb_epoch': nb_epoch,
-                                'hidden_layer_size': hidden_layer_size,
                                 'learning_rate': learning_rate,
                                 'nr_hidden_layers': nr_hidden_layers,
-                                'activation_function': activation_function
+                                'hidden_layer_size': hidden_layer_size,
+                                'activation_function': activation_function,
+                                'shuffle': shuffle
                             }
-                        print("current loss ", currentLoss)
-                        print("current params ", currentParams)
 
-    return currentParams  # Return the chosen hyper parameters
+                            print("Current:", currentParams)
 
-    return  # Return the chosen hyper parameters
+                            regressor = Regressor(xTrain,
+                                                  nb_epoch=nb_epoch,
+                                                  learning_rate=learning_rate,
+                                                  shuffle=shuffle,
+                                                  activation_function=activation_function,
+                                                  hidden_layer_size=hidden_layer_size
+                                                  )
+
+                            regressor.fit(xTrain, yTrain)
+
+                            # calculate loss of regressor
+                            loss = regressor.score(xValidate, yValidate)
+                            print("loss =", loss)
+                            if (minLoss is False) or (loss < minLoss):
+                                minLoss = loss
+                                minParams = currentParams
+                            print("current min loss", minLoss)
+
+    return minParams  # Return the chosen hyper parameters
 
     #######################################################################
     #                       ** END OF YOUR CODE **
@@ -350,12 +309,7 @@ def example_main():
     x_train, x_test, y_train, y_test = train_test_split(x_train, y_train)
 
     # HP Tune
-    mins = {'nb_epoch': 1000, 'batch_size': 1, 'learning_rate': 1, 'nr_hidden_layers': 1, 'hidden_layer_size': 32}
-    maxs = {'nb_epoch': 1500, 'batch_size': 3, 'learning_rate': 6, 'nr_hidden_layers': 4, 'hidden_layer_size': 1024}
-    steps = {'nb_epoch': 50, 'batch_size': 1, 'learning_rate': 5e-3, 'nr_hidden_layers': 1, 'hidden_layer_size': 2}
-    # print("po hym")
-    best = RegressorHyperParameterSearch(x_train, y_train, x_test, y_test, mins, maxs, steps)
-    # print("dolem nga tuneli")
+    best = RegressorHyperParameterSearch(x_train, y_train, x_test, y_test)
 
     # Training
     # This example trains on the whole available dataset. 
