@@ -87,8 +87,8 @@ class Regressor():
                     for col in data.columns:
                         data.loc[:, col] = data[col].fillna(data[col].mean())
 
-        numerical_cols = data.select_dtypes(include='number')
-        categorical_cols = data.select_dtypes(include='object')
+        numerical_cols = x.select_dtypes(include='number')
+        categorical_cols = x.select_dtypes(include='object')
 
         # Fill missing data
         fill_missing_nums(numerical_cols, y)
@@ -139,20 +139,8 @@ class Regressor():
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        print("te preoricess")
         X, Y = self._preprocessor(x, y=y, training=True)  # Do not forget
-
         self.trainer.train(X, Y)
-        # _loss_layer = nn.MSELossLayer()
-        # print("tek t")
-        # for epoch in range(self.nb_epoch):
-        #     # Perform forward pass though the model given the input.
-        #     # print("x_train_tensor", x_train_tensor.size())
-        #     pred = self.network.forward(X)
-        #     _loss_layer.forward(pred, Y)
-        #     grad_z = _loss_layer.backward()
-        #     self.network.backward(grad_z)
-        #     self.network.update_params(self.learning_rate)
 
         return self
 
@@ -365,9 +353,9 @@ def example_main():
     mins = {'nb_epoch': 1000, 'batch_size': 1, 'learning_rate': 1, 'nr_hidden_layers': 1, 'hidden_layer_size': 32}
     maxs = {'nb_epoch': 1500, 'batch_size': 3, 'learning_rate': 6, 'nr_hidden_layers': 4, 'hidden_layer_size': 1024}
     steps = {'nb_epoch': 50, 'batch_size': 1, 'learning_rate': 5e-3, 'nr_hidden_layers': 1, 'hidden_layer_size': 2}
-    print("po hym")
+    # print("po hym")
     best = RegressorHyperParameterSearch(x_train, y_train, x_test, y_test, mins, maxs, steps)
-    print("dolem nga tuneli")
+    # print("dolem nga tuneli")
 
     # Training
     # This example trains on the whole available dataset. 
