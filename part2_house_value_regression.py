@@ -196,7 +196,7 @@ class Regressor():
         #######################################################################
 
         X, Y = self._preprocessor(x, y=y, training=False)  # Do not forget
-        result = self.trainer.eval_loss(X, Y)
+        result = np.sqrt(self.trainer.eval_loss(X, Y))
 
         return result
 
@@ -255,8 +255,11 @@ def RegressorHyperParameterSearch(xTrain, yTrain, xValidate, yValidate):
         for learning_rate in [10**(-i) for i in range(1,6)]:
             for nr_hidden_layers in range(1,5):
                 for hidden_layer_size in [2**i for i in range(1,11)]:
-                    for activation_function in ["relu", "sigmoid"]:
-                        for shuffle in [True, False]:
+                    # for activation_function in ["relu", "sigmoid"]:
+                    #     for shuffle in [True, False]:
+
+                            activation_function = "relu"
+                            shuffle = False
 
                             currentParams = {
                                 'nb_epoch': nb_epoch,
