@@ -273,29 +273,34 @@ def example_main():
     # Feel free to use another CSV reader tool
     # But remember that LabTS tests take Pandas DataFrame as inputs
     data = pd.read_csv("housing.csv") 
-
-    # Splitting input and output
-    #shuffle
-    x = data.loc[:, data.columns != output_label]
-    y = data.loc[:, [output_label]]
-
+    
     shuffled_indices = np.arange(data.shape[0])
     np.random.shuffle(shuffled_indices)
+    # Splitting input and output
 
-    shuffled_x = x.loc[shuffled_indices]
-    shuffled_y = y.loc[shuffled_indices]
+    shuffled_data = data.iloc[shuffled_indices]
+    #shuffle
+
+    print(data)
+    print(shuffled_data)
+    x = shuffled_data.loc[:, data.columns != output_label]
+    y = shuffled_data.loc[:, [output_label]]
 
     n_train = int(len(shuffled_indices)*0.8)
     validation_end_ind = int(len(shuffled_indices)*0.9)
 
-    x_train = shuffled_x.iloc[:n_train]
-    y_train = shuffled_y.iloc[:n_train]
+    x_train = x.iloc[:n_train]
+    y_train = y.iloc[:n_train]
 
-    x_validation = shuffled_x.iloc[n_train:validation_end_ind]
-    y_validation = shuffled_y.iloc[n_train:validation_end_ind]
+    x_validation = x.iloc[n_train:validation_end_ind]
+    y_validation = y.iloc[n_train:validation_end_ind]
 
-    x_test = shuffled_x.iloc[validation_end_ind:]
-    y_test = shuffled_y.iloc[validation_end_ind:]
+    print(x_validation)
+
+    x_test = x.iloc[validation_end_ind:]
+
+    print(x_test)
+    y_test = y.iloc[validation_end_ind:]
 
     x_train = x_test.reset_index(drop=True)
     y_train = y_test.reset_index(drop=True)
