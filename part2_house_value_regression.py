@@ -238,7 +238,7 @@ def RegressorHyperParameterSearch(x_train, y_train, x_validation, y_validation):
         Returns a tuple of optimal parameters (number of hiddden layers, size of hidden layers, learning rate, number of epochs)
     """
     
-    potential_num_hl = [1,2,3]
+    potential_num_hl = [1]
     potential_size_hl = [2,4,8,10,16,32,64,128,256,512]
     potential_lrs = [0.001, 0.005, 0.01, 0.05, 0.1]
 
@@ -287,26 +287,33 @@ def example_main():
     shuffled_y = y.loc[shuffled_indices]
 
     n_train = int(len(shuffled_indices)*0.8)
+    validation_end_ind = int(len(shuffled_indices)*0.9)
 
     x_train = shuffled_x.iloc[:n_train]
     y_train = shuffled_y.iloc[:n_train]
 
-    x_test = shuffled_x.iloc[n_train:]
-    y_test = shuffled_y.iloc[n_train:]
+    x_validation = shuffled_x.iloc[n_train:validation_end_ind]
+    y_validation = shuffled_y.iloc[n_train:validation_end_ind]
+
+    x_test = shuffled_x.iloc[validation_end_ind:]
+    y_test = shuffled_y.iloc[validation_end_ind:]
 
     x_train = x_test.reset_index(drop=True)
     y_train = y_test.reset_index(drop=True)
 
+    x_validation = x_test.reset_index(drop=True)
+    y_validation = y_test.reset_index(drop=True)
+
     x_test = x_test.reset_index(drop=True)
     y_test = y_test.reset_index(drop=True)
 
-    # (optimal_num_hidden_layers, optimal_hidden_size, optimal_lr, optimal_epoch) = RegressorHyperParameterSearch(x_train, y_train, x_validation, y_validation)
+    (optimal_num_hidden_layers, optimal_hidden_size, optimal_lr, optimal_epoch) = RegressorHyperParameterSearch(x_train, y_train, x_validation, y_validation)
 
-    # print("BEST")
-    # print(optimal_num_hidden_layers)
-    # print(optimal_hidden_size)
-    # print(optimal_lr)
-    # print(optimal_epoch)
+    print("BEST")
+    print(optimal_num_hidden_layers)
+    print(optimal_hidden_size)
+    print(optimal_lr)
+    print(optimal_epoch)
 
     #regressor = Regressor(x_train, nb_epoch=optimal_epoch, no_hidden_layers=optimal_num_hidden_layers, hidden_layer_size=optimal_hidden_size, learning_rate=optimal_lr)
     regressor = Regressor(x_train)
