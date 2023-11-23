@@ -90,12 +90,9 @@ class Regressor():
         one_hot_encoded_df = pd.DataFrame(one_hot_encoded_data, columns=fit_lb.classes_)
         x = pd.concat([x, one_hot_encoded_df], axis=1)
         x.drop(columns=categorical_columns, axis=1, inplace=True)
-        #self.one_hot_encoded_params = fit_lb.get_params()
         
-        cols_to_normalize = list(default_vals.keys())
-        cols_to_normalize.remove(categorical_columns)
         scaler = MinMaxScaler()
-        x[cols_to_normalize] = scaler.fit_transform(x[cols_to_normalize])
+        x[numerical_columns] = scaler.fit_transform(x[numerical_columns])
 
         return torch.tensor(x.values, dtype=torch.float32), (torch.tensor(y.values, dtype=torch.float32) if isinstance(y, pd.DataFrame) else None)
 
