@@ -190,6 +190,8 @@ class Regressor():
         #                       ** START OF YOUR CODE **
         #######################################################################
         X, Y = self._preprocessor(x, y = y, training = False)
+
+        output = 
         return (mean_squared_error(self.model(X).detach().numpy(), Y.numpy()))**0.5
 
         #######################################################################
@@ -326,7 +328,7 @@ def example_main():
 
     # print("best values")
     # print(regressor.predict(x_test))
-    # save_regressor(regressor)
+    save_regressor(regressor)
 
     # Error
     error = regressor.score(x_test, y_test)
