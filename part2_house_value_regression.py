@@ -70,11 +70,11 @@ class Regressor():
 
         numerical_columns = x.select_dtypes(include=np.number).columns
         categorical_columns = x.select_dtypes(include="object").columns
-
-        for column in numerical_columns:
-            self.default_vals[column] = x[column].mean()
-        for column in categorical_columns:
-            self.default_vals[column] = x[column].mode()[0]
+        if training:
+            for column in numerical_columns:
+                self.default_vals[column] = x[column].mean()
+            for column in categorical_columns:
+                self.default_vals[column] = x[column].mode()[0]
         
         x = x.fillna(value=self.default_vals)
         
