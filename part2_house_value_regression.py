@@ -1,10 +1,13 @@
 import torch
+import torch.nn as nn
 import pickle
 import numpy as np
 import pandas as pd
 from sklearn.preprocessing import LabelBinarizer, MinMaxScaler
-from sklearn.model_selection import train_test_split
-import part1_nn_lib as nn
+from part1_nn_lib import MultiLayerNetwork, Trainer
+from sklearn.metrics import mean_squared_error
+from collections import OrderedDict
+import math
 
 
 class Regressor():
@@ -108,7 +111,7 @@ class Regressor():
         if y is not None:
             y = torch.tensor(y.values, dtype=torch.float32)
 
-        return torch.from_numpy(result_x), y
+        return torch.Tensor(result_x), y
 
         #######################################################################
         #                       ** END OF YOUR CODE **
@@ -131,8 +134,27 @@ class Regressor():
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        X, Y = self._preprocessor(x, y=y, training=True)  # Do not forget
-        self.trainer.train(X, Y)
+        X, Y = self._preprocessor(x, y = y, training = True)
+
+        layers = OrderedDict([("input_layer",nn.Linear(self.input_size, self.hidden_layer_size))])
+
+        for i in range(self.no_hidden_layers):
+            hidden_layer_name = "hidden_layer" + str(i+1) 
+            layers[hidden_layer_name] = nn.Linear(self.hidden_layer_size, self.hidden_layer_size)
+
+        layers["output_layer"] = nn.Linear(self.hidden_layer_size,self.output_size)
+        layers["output_layer_act"] = nn.ReLU()
+
+        self.model = nn.Sequential(layers)
+        loss_fn = nn.MSELoss()
+        
+        optimizer = torch.optim.Adam(self.model.parameters(), lr=self.learning_rate)
+        for n in range(self.nb_epoch):
+            y_pred = self.model(X.float())
+            loss = loss_fn(y_pred, Y.float())
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
 
         return self
 
@@ -159,7 +181,7 @@ class Regressor():
         #######################################################################
 
         X, _ = self._preprocessor(x, training=False)  # Do not forget
-        return self.network(X)
+        return self.model(X).detach().numpy
 
         #######################################################################
         #                       ** END OF YOUR CODE **
@@ -184,7 +206,7 @@ class Regressor():
         #######################################################################
 
         X, Y = self._preprocessor(x, y=y, training=False)  # Do not forget
-        result = np.sqrt(self.trainer.eval_loss(X, Y))
+        result = (mean_squared_error(self.model(X).detach().numpy(), Y.numpy()))**0.5
 
         return result
 
@@ -284,35 +306,41 @@ def RegressorHyperParameterSearch(xTrain, yTrain, xValidate, yValidate):
     #                       ** END OF YOUR CODE **
     #######################################################################
 
-
 def example_main():
+
     output_label = "median_house_value"
 
     # Use pandas to read CSV data as it contains various object types
     # Feel free to use another CSV reader tool
     # But remember that LabTS tests take Pandas DataFrame as inputs
-    data = pd.read_csv("housing.csv")
+    data = pd.read_csv("housing.csv") 
 
     # Splitting input and output
-    x_train = data.loc[:, data.columns != output_label]
-    y_train = data.loc[:, [output_label]]
+    #shuffle
+    x = data.loc[:, data.columns != output_label]
+    y = data.loc[:,[output_label]]
 
-    x_train, x_test, y_train, y_test = train_test_split(x_train, y_train)
+    validation_start = (data.shape[0] // 10) * 2
+    validation_end = (data.shape[0] // 10)
 
-    # HP Tune
-    #best = RegressorHyperParameterSearch(x_train, y_train, x_test, y_test)
+    x_train = x.iloc[:-validation_start]
+    y_train = y.iloc[:-validation_start]
 
-    # Training
-    # This example trains on the whole available dataset. 
-    # You probably want to separate some held-out data 
-    # to make sure the model isn't overfitting
-    regressor = Regressor(x_train)#, nb_epoch=best['nb_epoch'], batch_size=best['batch_size'],
-                          #learning_rate=['learning_rate'])
+    x_validation = x.iloc[-validation_start:-validation_end]
+    y_validation = y.iloc[-validation_start:-validation_end]
+    x_validation = x_validation.reset_index(drop=True)
+    y_validation = y_validation.reset_index(drop=True)
+
+    x_test = x.iloc[-validation_end:]
+    y_test = y.iloc[-validation_end:]
+    x_test = x_test.reset_index(drop=True)
+    y_test = y_test.reset_index(drop=True)
+
+    regressor = Regressor(x_train)
     regressor.fit(x_train, y_train)
-    save_regressor(regressor)
 
     # Error
-    error = regressor.score(x_train, y_train)
+    error = regressor.score(x_test, y_test)
     print("\nRegressor error: {}\n".format(error))
 
 
