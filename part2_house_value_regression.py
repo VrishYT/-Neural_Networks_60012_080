@@ -9,16 +9,9 @@ from sklearn.metrics import mean_squared_error
 from collections import OrderedDict
 import math
 
-
 class Regressor():
 
-    def __init__(self,
-                 x: pd.DataFrame,
-                 nb_epoch: int = 100,
-                 learning_rate: float = 0.1,
-                 no_hidden_layers: int = 2,
-                 hidden_layer_size: int = 128,
-                 ):
+    def __init__(self, x, nb_epoch = 100, num_hidden_layers=2, hidden_size=128, lr=0.1):
         # You can add any input parameters you need
         # Remember to set them with a default value for LabTS tests
         """ 
@@ -35,88 +28,84 @@ class Regressor():
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-
-        # Replace this code with your own
         self.model = None
         self.stored_classes = None
-        pro_x, _ = self._preprocessor(x, training=True)
-        self.input_size = pro_x.shape[1]
+        X, _ = self._preprocessor(x, training = True)
+        self.input_size = X.shape[1]
         self.output_size = 1
-        
 
-        
-        self.nb_epoch: int = nb_epoch
-        self.no_hidden_layers = no_hidden_layers
-        self.hidden_layer_size = hidden_layer_size
-        self.learning_rate = learning_rate
+        self.nb_epoch = nb_epoch 
+        self.num_hidden_layers = num_hidden_layers
+        self.hidden_size = hidden_size
+        self.lr = lr
+        return
 
-        return 
         #######################################################################
         #                       ** END OF YOUR CODE **
         #######################################################################
 
-    def _preprocessor(self, x, y=None, training: bool = False):
-
+    def _preprocessor(self, x, y = None, training = False):
         """ 
         Preprocess input of the network.
-        
+          
         Arguments:
             - x {pd.DataFrame} -- Raw input array of shape 
                 (batch_size, input_size).
             - y {pd.DataFrame} -- Raw target array of shape (batch_size, 1).
             - training {boolean} -- Boolean indicating if we are training or 
                 testing the model.
+
         Returns:
             - {torch.tensor} or {numpy.ndarray} -- Preprocessed input array of
-            size (batch_size, input_size). The input_size does not have to be the same as the input_size for x above.
+              size (batch_size, input_size). The input_size does not have to be the same as the input_size for x above.
             - {torch.tensor} or {numpy.ndarray} -- Preprocessed target array of
-            size (batch_size, 1).
+              size (batch_size, 1).
             
         """
 
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        def fill_missing_nums(*datas):
-            for data in datas:
-                if data is not None:
-                    for col in data.columns:
-                        data.loc[:, col] = data[col].fillna(data[col].mean())
 
-        numerical_cols = x.select_dtypes(include='number')
-        categorical_cols = x.select_dtypes(include='object')
-
-        # Fill missing data
-        fill_missing_nums(numerical_cols, y)
-        for col in categorical_cols.columns:
-            categorical_cols.loc[:, col] = categorical_cols[col].fillna(categorical_cols[col].mode()[0])
-
+        defaults = {"longitude": x["longitude"].mean(),
+                    "latitude": x["latitude"].mean(),
+                    "housing_median_age": x["housing_median_age"].mean(),
+                    "total_rooms": x["total_rooms"].mean(),
+                    "total_bedrooms": x["total_bedrooms"].mean(),
+                    "population" : x["population"].mean(),
+                    "households" : x["households"].mean(),
+                    "median_income" : x["median_income"].mean(),
+                    "ocean_proximity" : x["ocean_proximity"].mode()[0],}
+        
+        x = x.fillna(value=defaults)
+        
         fit_lb = None
         if training:
             lb = LabelBinarizer()
-            fit_lb = lb.fit(categorical_cols)
-            self.stored_classes = fit_lb.classes_
+            fit_lb = lb.fit(x["ocean_proximity"])
+            self.stored_classes=fit_lb.classes_
         else:
             fit_lb = LabelBinarizer()
             fit_lb.classes_ = self.stored_classes
 
-        one_hot_encoded_data = fit_lb.transform(categorical_cols)
-
+        one_hot_encoded_data = fit_lb.transform(x["ocean_proximity"])
+        one_hot_encoded_df = pd.DataFrame(one_hot_encoded_data, columns=fit_lb.classes_)
+        x = pd.concat([x, one_hot_encoded_df], axis=1)
+        x.drop(columns=["ocean_proximity"], axis=1, inplace=True)
+        self.one_hot_encoded_params = fit_lb.get_params()
+        
+        cols_to_normalize = list(defaults.keys())
+        cols_to_normalize.remove("ocean_proximity")
         scaler = MinMaxScaler()
+        x[cols_to_normalize] = scaler.fit_transform(x[cols_to_normalize])
 
-        preprocessed_x = scaler.fit_transform(numerical_cols)
-
-        result_x = np.concatenate((preprocessed_x, one_hot_encoded_data), axis=1)
-
-        if y is not None:
-            y = torch.tensor(y.values, dtype=torch.float32)
-
-        return torch.Tensor(result_x), y
+        return torch.tensor(x.values, dtype=torch.float32), (torch.tensor(y.values, dtype=torch.float32) if isinstance(y, pd.DataFrame) else None)
 
         #######################################################################
         #                       ** END OF YOUR CODE **
         #######################################################################
 
+        
     def fit(self, x, y):
         """
         Regressor training function
@@ -134,21 +123,22 @@ class Regressor():
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
+
         X, Y = self._preprocessor(x, y = y, training = True)
 
-        layers = OrderedDict([("input_layer",nn.Linear(self.input_size, self.hidden_layer_size))])
+        layers = OrderedDict([("input_layer",nn.Linear(self.input_size, self.hidden_size))])
 
-        for i in range(self.no_hidden_layers):
+        for i in range(self.num_hidden_layers):
             hidden_layer_name = "hidden_layer" + str(i+1) 
-            layers[hidden_layer_name] = nn.Linear(self.hidden_layer_size, self.hidden_layer_size)
+            layers[hidden_layer_name] = nn.Linear(self.hidden_size, self.hidden_size)
 
-        layers["output_layer"] = nn.Linear(self.hidden_layer_size,self.output_size)
+        layers["output_layer"] = nn.Linear(self.hidden_size,self.output_size)
         layers["output_layer_act"] = nn.ReLU()
 
         self.model = nn.Sequential(layers)
         loss_fn = nn.MSELoss()
         
-        optimizer = torch.optim.Adam(self.model.parameters(), lr=self.learning_rate)
+        optimizer = torch.optim.Adam(self.model.parameters(), lr=self.lr)
         for n in range(self.nb_epoch):
             y_pred = self.model(X.float())
             loss = loss_fn(y_pred, Y.float())
@@ -162,9 +152,9 @@ class Regressor():
         #                       ** END OF YOUR CODE **
         #######################################################################
 
+            
     def predict(self, x):
-        """                    regressor.fit(xTrain, yTrain)
-
+        """
         Output the value corresponding to an input x.
 
         Arguments:
@@ -180,8 +170,8 @@ class Regressor():
         #                       ** START OF YOUR CODE **
         #######################################################################
 
-        X, _ = self._preprocessor(x, training=False)  # Do not forget
-        return self.model(X).detach().numpy
+        X, _ = self._preprocessor(x, training = False) # Do not forget
+        return self.model(X).detach().numpy()
 
         #######################################################################
         #                       ** END OF YOUR CODE **
@@ -204,18 +194,15 @@ class Regressor():
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-
-        X, Y = self._preprocessor(x, y=y, training=False)  # Do not forget
-        result = (mean_squared_error(self.model(X).detach().numpy(), Y.numpy()))**0.5
-
-        return result
+        X, Y = self._preprocessor(x, y = y, training = False)
+        return (mean_squared_error(self.model(X).detach().numpy(), Y.numpy()))**0.5
 
         #######################################################################
         #                       ** END OF YOUR CODE **
         #######################################################################
 
 
-def save_regressor(trained_model):
+def save_regressor(trained_model): 
     """ 
     Utility function to save the trained regressor model in part2_model.pickle.
     """
@@ -225,7 +212,7 @@ def save_regressor(trained_model):
     print("\nSaved model in part2_model.pickle\n")
 
 
-def load_regressor():
+def load_regressor(): 
     """ 
     Utility function to load the trained regressor model in part2_model.pickle.
     """
@@ -236,7 +223,8 @@ def load_regressor():
     return trained_model
 
 
-def RegressorHyperParameterSearch(xTrain, yTrain, xValidate, yValidate):
+
+def RegressorHyperParameterSearch(x_train, y_train, x_validation, y_validation): 
     # Ensure to add whatever inputs you deem necessary to this function
     """
     Performs a hyper-parameter for fine-tuning the regressor implemented 
@@ -247,64 +235,50 @@ def RegressorHyperParameterSearch(xTrain, yTrain, xValidate, yValidate):
         
     Returns:
         The function should return your optimised hyper-parameters. 
-        nb_epoch: int = 1000,
-        learning_rate: float = 1e-2,
-        shuffle: bool = False,
-        batch_size: int = 1
-
+        Returns a tuple of optimal parameters (number of hiddden layers, size of hidden layers, learning rate, number of epochs)
     """
+    
+    potential_num_hl = [1,2,3]
+    potential_size_hl = [2,4,8,10,16,32,64,128,256,512]
+    potential_lrs = [0.001, 0.005, 0.01, 0.05, 0.1]
+
+    min_score = float('inf')
+    best_parameters = None
+
+    for i in potential_num_hl:
+        for j in potential_size_hl:
+            for k in potential_lrs:
+                for l in [10**ll for ll in range(1,4)]:
+                    regressor = Regressor(x_train,num_hidden_layers=i,hidden_size=j, lr=k, nb_epoch=l)
+                    regressor.fit(x_train, y_train)
+                    curr_score = regressor.score(x_validation, y_validation)
+
+                    if curr_score < min_score:
+                        min_score = curr_score
+                        best_parameters = (i,j,k,l)
+
+                        print("UPDATED minimum score:")
+                        print(min_score)
+                        print("NEW best parameters")
+                        print(best_parameters)
+
+
+    return best_parameters
+
+            
 
     #######################################################################
     #                       ** START OF YOUR CODE **
     #######################################################################
 
-    minLoss = False
-    minParams = None
 
-    for nb_epoch in [10**i for i in range(1,4)]:
-        for learning_rate in [10**(-i) for i in range(1,6)]:
-            for nr_hidden_layers in range(1,5):
-                for hidden_layer_size in [2**i for i in range(1,11)]:
-                    # for activation_function in ["relu", "sigmoid"]:
-                    #     for shuffle in [True, False]:
-
-                            activation_function = "relu"
-                            shuffle = False
-
-                            currentParams = {
-                                'nb_epoch': nb_epoch,
-                                'learning_rate': learning_rate,
-                                'nr_hidden_layers': nr_hidden_layers,
-                                'hidden_layer_size': hidden_layer_size,
-                                'activation_function': activation_function,
-                                'shuffle': shuffle
-                            }
-
-                            print("Current:", currentParams)
-
-                            regressor = Regressor(xTrain,
-                                                  nb_epoch=nb_epoch,
-                                                  learning_rate=learning_rate,
-                                                  shuffle=shuffle,
-                                                  activation_function=activation_function,
-                                                  hidden_layer_size=hidden_layer_size
-                                                  )
-
-                            regressor.fit(xTrain, yTrain)
-
-                            # calculate loss of regressor
-                            loss = regressor.score(xValidate, yValidate)
-                            print("loss =", loss)
-                            if (minLoss is False) or (loss < minLoss):
-                                minLoss = loss
-                                minParams = currentParams
-                            print("current min loss", minLoss)
-
-    return minParams  # Return the chosen hyper parameters
+    return  # Return the chosen hyper parameters
 
     #######################################################################
     #                       ** END OF YOUR CODE **
     #######################################################################
+
+
 
 def example_main():
 
@@ -314,6 +288,9 @@ def example_main():
     # Feel free to use another CSV reader tool
     # But remember that LabTS tests take Pandas DataFrame as inputs
     data = pd.read_csv("housing.csv") 
+
+    # nullcols = data.columns[data.isna().any()].tolist()
+    # print(nullcols)
 
     # Splitting input and output
     #shuffle
@@ -336,8 +313,25 @@ def example_main():
     x_test = x_test.reset_index(drop=True)
     y_test = y_test.reset_index(drop=True)
 
+    # (optimal_num_hidden_layers, optimal_hidden_size, optimal_lr, optimal_epoch) = RegressorHyperParameterSearch(x_train, y_train, x_validation, y_validation)
+
+    # print("BEST")
+    # print(optimal_num_hidden_layers)
+    # print(optimal_hidden_size)
+    # print(optimal_lr)
+    # print(optimal_epoch)
+
+    # Training
+    # This example trains on the whole available dataset. 
+    # You probably want to separate some held-out data 
+    # to make sure the model isn't overfitting
+    # regressor = Regressor(x_train, nb_epoch=optimal_epoch, num_hidden_layers=optimal_num_hidden_layers, hidden_size=optimal_hidden_size, lr=optimal_lr)
     regressor = Regressor(x_train)
     regressor.fit(x_train, y_train)
+
+    # print("best values")
+    # print(regressor.predict(x_test))
+    # save_regressor(regressor)
 
     # Error
     error = regressor.score(x_test, y_test)
