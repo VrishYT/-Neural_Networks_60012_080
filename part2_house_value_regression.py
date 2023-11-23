@@ -263,9 +263,49 @@ def RegressorHyperParameterSearch(x_train, y_train, x_validation, y_validation):
     #                       ** END OF YOUR CODE **
     #######################################################################
 
-
-
 def example_main():
+    output_label = "median_house_value"
+
+    # Use pandas to read CSV data as it contains various object types
+    # Feel free to use another CSV reader tool
+    # But remember that LabTS tests take Pandas DataFrame as inputs
+    data = pd.read_csv("housing.csv") 
+    
+    shuffled_indices = np.arange(data.shape[0])
+    np.random.shuffle(shuffled_indices)
+    # Splitting input and output
+
+    shuffled_data = data.iloc[shuffled_indices]
+    #shuffle
+
+    x = shuffled_data.loc[:, data.columns != output_label]
+    y = shuffled_data.loc[:, [output_label]]
+
+    n_train = int(len(shuffled_indices)*0.8)
+
+    x_train = x.iloc[:n_train]
+    y_train = y.iloc[:n_train]
+
+    x_test = x.iloc[n_train:]
+    y_test = y.iloc[n_train:]
+
+    x_train = x_test.reset_index(drop=True)
+    y_train = y_test.reset_index(drop=True)
+
+    x_test = x_test.reset_index(drop=True)
+    y_test = y_test.reset_index(drop=True)
+
+    #(optimal_num_hidden_layers, optimal_hidden_size, optimal_lr, optimal_epoch) = example_main_hyper_parameters()
+    #regressor = Regressor(x_train, nb_epoch=optimal_epoch, no_hidden_layers=optimal_num_hidden_layers, hidden_layer_size=optimal_hidden_size, learning_rate=optimal_lr)
+    regressor = Regressor(x_train)
+    regressor.fit(x_train, y_train)
+
+    save_regressor(regressor)
+    # Error
+    error = regressor.score(x_test, y_test)
+    print("\nRegressor error: {}\n".format(error))
+
+def example_main_hyper_parameters():
 
     output_label = "median_house_value"
 
@@ -281,56 +321,32 @@ def example_main():
     shuffled_data = data.iloc[shuffled_indices]
     #shuffle
 
-    print(data)
-    print(shuffled_data)
     x = shuffled_data.loc[:, data.columns != output_label]
     y = shuffled_data.loc[:, [output_label]]
 
     n_train = int(len(shuffled_indices)*0.8)
-    validation_end_ind = int(len(shuffled_indices)*0.9)
 
     x_train = x.iloc[:n_train]
     y_train = y.iloc[:n_train]
 
-    x_validation = x.iloc[n_train:validation_end_ind]
-    y_validation = y.iloc[n_train:validation_end_ind]
+    x_validation = x.iloc[n_train:]
+    y_validation = y.iloc[n_train:]
 
-    print(x_validation)
+    x_train = x_train.reset_index(drop=True)
+    y_train = y_train.reset_index(drop=True)
 
-    x_test = x.iloc[validation_end_ind:]
+    x_validation = x_validation.reset_index(drop=True)
+    y_validation = y_validation.reset_index(drop=True)
 
-    print(x_test)
-    y_test = y.iloc[validation_end_ind:]
+    (optimal_num_hidden_layers, optimal_hidden_size, optimal_lr, optimal_epoch) = RegressorHyperParameterSearch(x_train, y_train, x_validation, y_validation)
 
-    x_train = x_test.reset_index(drop=True)
-    y_train = y_test.reset_index(drop=True)
+    print("BEST")
+    print(optimal_num_hidden_layers)
+    print(optimal_hidden_size)
+    print(optimal_lr)
+    print(optimal_epoch)
 
-    x_validation = x_test.reset_index(drop=True)
-    y_validation = y_test.reset_index(drop=True)
-
-    x_test = x_test.reset_index(drop=True)
-    y_test = y_test.reset_index(drop=True)
-
-    # (optimal_num_hidden_layers, optimal_hidden_size, optimal_lr, optimal_epoch) = RegressorHyperParameterSearch(x_train, y_train, x_validation, y_validation)
-
-    # print("BEST")
-    # print(optimal_num_hidden_layers)
-    # print(optimal_hidden_size)
-    # print(optimal_lr)
-    # print(optimal_epoch)
-
-    #regressor = Regressor(x_train, nb_epoch=optimal_epoch, no_hidden_layers=optimal_num_hidden_layers, hidden_layer_size=optimal_hidden_size, learning_rate=optimal_lr)
-    regressor = Regressor(x_train)
-    regressor.fit(x_train, y_train)
-
-    print("best values")
-    print(regressor.predict(x_test))
-    save_regressor(regressor)
-
-    # Error
-    error = regressor.score(x_test, y_test)
-    print("\nRegressor error: {}\n".format(error))
-
+    return (optimal_num_hidden_layers, optimal_hidden_size, optimal_lr, optimal_epoch)
 
 if __name__ == "__main__":
     example_main()
