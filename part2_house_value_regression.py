@@ -11,7 +11,7 @@ import math
 
 class Regressor():
 
-    def __init__(self, x, nb_epoch = 100, no_hidden_layers=2, hidden_layer_size=256, learning_rate=0.1):
+    def __init__(self, x, nb_epoch = 1000, no_hidden_layers=2, hidden_layer_size=512, learning_rate=0.05):
         # You can add any input parameters you need
         # Remember to set them with a default value for LabTS tests
         """ 
