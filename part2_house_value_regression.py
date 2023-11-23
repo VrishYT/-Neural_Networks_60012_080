@@ -30,6 +30,7 @@ class Regressor():
         #######################################################################
         self.model = None
         self.stored_classes = None
+        self.default_vals = {}
         X, _ = self._preprocessor(x, training = True)
         self.input_size = X.shape[1]
         self.output_size = 1
@@ -67,17 +68,15 @@ class Regressor():
         #                       ** START OF YOUR CODE **
         #######################################################################
 
-        defaults = {"longitude": x["longitude"].mean(),
-                    "latitude": x["latitude"].mean(),
-                    "housing_median_age": x["housing_median_age"].mean(),
-                    "total_rooms": x["total_rooms"].mean(),
-                    "total_bedrooms": x["total_bedrooms"].mean(),
-                    "population" : x["population"].mean(),
-                    "households" : x["households"].mean(),
-                    "median_income" : x["median_income"].mean(),
-                    "ocean_proximity" : x["ocean_proximity"].mode()[0],}
+        numerical_columns = x.select_dtypes(include=np.number).columns
+        categorical_columns = x.select_dtypes(include="object").columns
+
+        for column in numerical_columns:
+            self.default_vals[column] = x[column].mean()
+        for column in categorical_columns:
+            self.default_vals[column] = x[column].mode()[0]
         
-        x = x.fillna(value=defaults)
+        x = x.fillna(value=self.default_vals)
         
         fit_lb = None
         if training:
@@ -94,7 +93,7 @@ class Regressor():
         x.drop(columns=["ocean_proximity"], axis=1, inplace=True)
         self.one_hot_encoded_params = fit_lb.get_params()
         
-        cols_to_normalize = list(defaults.keys())
+        cols_to_normalize = list(self.default_vals.keys())
         cols_to_normalize.remove("ocean_proximity")
         scaler = MinMaxScaler()
         x[cols_to_normalize] = scaler.fit_transform(x[cols_to_normalize])
