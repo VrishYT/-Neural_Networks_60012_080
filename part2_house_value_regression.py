@@ -30,7 +30,6 @@ class Regressor():
         #######################################################################
         self.model = None
         self.stored_classes = None
-        self.default_vals = {}
         X, _ = self._preprocessor(x, training = True)
         self.input_size = X.shape[1]
         self.output_size = 1
@@ -70,31 +69,31 @@ class Regressor():
 
         numerical_columns = x.select_dtypes(include=np.number).columns
         categorical_columns = x.select_dtypes(include="object").columns
-        if training:
-            for column in numerical_columns:
-                self.default_vals[column] = x[column].mean()
-            for column in categorical_columns:
-                self.default_vals[column] = x[column].mode()[0]
+        default_vals = {}
+        for column in numerical_columns:
+            default_vals[column] = x[column].mean()
+        for column in categorical_columns:
+            default_vals[column] = x[column].mode()[0]
         
-        x = x.fillna(value=self.default_vals)
+        x = x.fillna(value=default_vals)
         
         fit_lb = None
         if training:
             lb = LabelBinarizer()
-            fit_lb = lb.fit(x["ocean_proximity"])
+            fit_lb = lb.fit(categorical_columns)
             self.stored_classes=fit_lb.classes_
         else:
             fit_lb = LabelBinarizer()
             fit_lb.classes_ = self.stored_classes
 
-        one_hot_encoded_data = fit_lb.transform(x["ocean_proximity"])
+        one_hot_encoded_data = fit_lb.transform(categorical_columns)
         one_hot_encoded_df = pd.DataFrame(one_hot_encoded_data, columns=fit_lb.classes_)
         x = pd.concat([x, one_hot_encoded_df], axis=1)
-        x.drop(columns=["ocean_proximity"], axis=1, inplace=True)
-        self.one_hot_encoded_params = fit_lb.get_params()
+        x.drop(columns=categorical_columns, axis=1, inplace=True)
+        #self.one_hot_encoded_params = fit_lb.get_params()
         
-        cols_to_normalize = list(self.default_vals.keys())
-        cols_to_normalize.remove("ocean_proximity")
+        cols_to_normalize = list(default_vals.keys())
+        cols_to_normalize.remove(categorical_columns)
         scaler = MinMaxScaler()
         x[cols_to_normalize] = scaler.fit_transform(x[cols_to_normalize])
 
