@@ -11,7 +11,7 @@ import math
 
 class Regressor():
 
-    def __init__(self, x, nb_epoch = 100, no_hidden_layers=2, hidden_layer_size=128, learning_rate=0.1):
+    def __init__(self, x, nb_epoch = 1000, no_hidden_layers=1, hidden_layer_size=128, learning_rate=0.01):
         # You can add any input parameters you need
         # Remember to set them with a default value for LabTS tests
         """ 
@@ -121,14 +121,16 @@ class Regressor():
 
         X, Y = self._preprocessor(x, y = y, training = True)
 
-        layers = OrderedDict([("input_layer",nn.Linear(self.input_size, self.hidden_layer_size))])
+        layers = OrderedDict([("input_layer",nn.Linear(self.input_size, self.hidden_layer_size, bias=True))])
 
         for i in range(self.no_hidden_layers):
             hidden_layer_name = "hidden_layer" + str(i+1) 
-            layers[hidden_layer_name] = nn.Linear(self.hidden_layer_size, self.hidden_layer_size)
+            relu_name = "relu" + str(i+1)
+            layers[hidden_layer_name] = nn.Linear(self.hidden_layer_size, self.hidden_layer_size, bias=True)
+            layers[relu_name] = nn.ReLU()
 
-        layers["output_layer"] = nn.Linear(self.hidden_layer_size,self.output_size)
-        layers["output_layer_act"] = nn.ReLU()
+        layers["output_layer"] = nn.Linear(self.hidden_layer_size,self.output_size, bias=True)
+        #layers["output_layer_act"] = nn.ReLU()
 
         self.model = nn.Sequential(layers)
         loss_fn = nn.MSELoss()
@@ -220,7 +222,10 @@ def load_regressor():
 
 
 
-def RegressorHyperParameterSearch(x_train, y_train, x_validation, y_validation): 
+def RegressorHyperParameterSearch(x_train, y_train, x_validation, y_validation):
+    #######################################################################
+    #                       ** START OF YOUR CODE **
+    ####################################################################### 
     # Ensure to add whatever inputs you deem necessary to this function
     """
     Performs a hyper-parameter for fine-tuning the regressor implemented 
@@ -245,9 +250,10 @@ def RegressorHyperParameterSearch(x_train, y_train, x_validation, y_validation):
         for j in potential_size_hl:
             for k in potential_lrs:
                 for l in [10**ll for ll in range(1,4)]:
-                    regressor = Regressor(x_train,num_hidden_layers=i,hidden_size=j, lr=k, nb_epoch=l)
+                    regressor = Regressor(x_train,no_hidden_layers=i,hidden_layer_size=j, learning_rate=k, nb_epoch=l)
                     regressor.fit(x_train, y_train)
                     curr_score = regressor.score(x_validation, y_validation)
+                    print("params", (i,j,k,l), "score", curr_score)
 
                     if curr_score < min_score:
                         min_score = curr_score
@@ -260,13 +266,6 @@ def RegressorHyperParameterSearch(x_train, y_train, x_validation, y_validation):
 
 
     return best_parameters
-
-            
-
-    #######################################################################
-    #                       ** START OF YOUR CODE **
-    #######################################################################
-
 
     #######################################################################
     #                       ** END OF YOUR CODE **
@@ -282,9 +281,6 @@ def example_main():
     # Feel free to use another CSV reader tool
     # But remember that LabTS tests take Pandas DataFrame as inputs
     data = pd.read_csv("housing.csv") 
-
-    # nullcols = data.columns[data.isna().any()].tolist()
-    # print(nullcols)
 
     # Splitting input and output
     #shuffle
@@ -307,7 +303,7 @@ def example_main():
     x_test = x_test.reset_index(drop=True)
     y_test = y_test.reset_index(drop=True)
 
-    # (optimal_num_hidden_layers, optimal_hidden_size, optimal_lr, optimal_epoch) = RegressorHyperParameterSearch(x_train, y_train, x_validation, y_validation)
+    #(optimal_num_hidden_layers, optimal_hidden_size, optimal_lr, optimal_epoch) = RegressorHyperParameterSearch(x_train, y_train, x_validation, y_validation)
 
     # print("BEST")
     # print(optimal_num_hidden_layers)
@@ -315,11 +311,7 @@ def example_main():
     # print(optimal_lr)
     # print(optimal_epoch)
 
-    # Training
-    # This example trains on the whole available dataset. 
-    # You probably want to separate some held-out data 
-    # to make sure the model isn't overfitting
-    # regressor = Regressor(x_train, nb_epoch=optimal_epoch, num_hidden_layers=optimal_num_hidden_layers, hidden_size=optimal_hidden_size, lr=optimal_lr)
+    #regressor = Regressor(x_train, nb_epoch=optimal_epoch, no_hidden_layers=optimal_num_hidden_layers, hidden_layer_size=optimal_hidden_size, learning_rate=optimal_lr)
     regressor = Regressor(x_train)
     regressor.fit(x_train, y_train)
 
