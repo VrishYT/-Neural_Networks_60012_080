@@ -268,8 +268,6 @@ def RegressorHyperParameterSearch(x_train, y_train, x_validation, y_validation):
     #######################################################################
 
 
-    return  # Return the chosen hyper parameters
-
     #######################################################################
     #                       ** END OF YOUR CODE **
     #######################################################################
@@ -325,8 +323,8 @@ def example_main():
     regressor = Regressor(x_train)
     regressor.fit(x_train, y_train)
 
-    # print("best values")
-    # print(regressor.predict(x_test))
+    print("best values")
+    print(regressor.predict(x_test))
     save_regressor(regressor)
 
     # Error
