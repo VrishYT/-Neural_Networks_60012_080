@@ -2,7 +2,7 @@ import torch
 import pickle
 import numpy as np
 import pandas as pd
-from sklearn.preprocessing import LabelBinarizer
+from sklearn.preprocessing import LabelBinarizer, MinMaxScaler
 from sklearn.model_selection import train_test_split
 import part1_nn_lib as nn
 
@@ -110,13 +110,13 @@ class Regressor():
 
         one_hot_encoded_data = fit_lb.transform(categorical_cols)
 
-        if training:
-            self.preprocessor = nn.Preprocessor(numerical_cols)
+        scaler = MinMaxScaler()
 
-        preprocessed_x = self.preprocessor.apply(numerical_cols)
+        preprocessed_x = scaler.fit_transform(numerical_cols)
 
         result_x = np.concatenate((preprocessed_x, one_hot_encoded_data), axis=1)
-
+        
+        print(result_x)
         if y is not None:
             y = y.to_numpy()
 
