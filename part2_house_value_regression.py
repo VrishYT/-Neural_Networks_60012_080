@@ -11,7 +11,7 @@ import math
 
 class Regressor():
 
-    def __init__(self, x, nb_epoch = 100, num_hidden_layers=2, hidden_size=128, lr=0.1):
+    def __init__(self, x, nb_epoch = 100, no_hidden_layers=2, hidden_layer_size=128, learning_rate=0.1):
         # You can add any input parameters you need
         # Remember to set them with a default value for LabTS tests
         """ 
@@ -35,9 +35,9 @@ class Regressor():
         self.output_size = 1
 
         self.nb_epoch = nb_epoch 
-        self.num_hidden_layers = num_hidden_layers
-        self.hidden_size = hidden_size
-        self.lr = lr
+        self.no_hidden_layers = no_hidden_layers
+        self.hidden_layer_size = hidden_layer_size
+        self.learning_rate = learning_rate
         return
 
         #######################################################################
@@ -126,19 +126,19 @@ class Regressor():
 
         X, Y = self._preprocessor(x, y = y, training = True)
 
-        layers = OrderedDict([("input_layer",nn.Linear(self.input_size, self.hidden_size))])
+        layers = OrderedDict([("input_layer",nn.Linear(self.input_size, self.hidden_layer_size))])
 
-        for i in range(self.num_hidden_layers):
+        for i in range(self.no_hidden_layers):
             hidden_layer_name = "hidden_layer" + str(i+1) 
-            layers[hidden_layer_name] = nn.Linear(self.hidden_size, self.hidden_size)
+            layers[hidden_layer_name] = nn.Linear(self.hidden_layer_size, self.hidden_layer_size)
 
-        layers["output_layer"] = nn.Linear(self.hidden_size,self.output_size)
+        layers["output_layer"] = nn.Linear(self.hidden_layer_size,self.output_size)
         layers["output_layer_act"] = nn.ReLU()
 
         self.model = nn.Sequential(layers)
         loss_fn = nn.MSELoss()
         
-        optimizer = torch.optim.Adam(self.model.parameters(), lr=self.lr)
+        optimizer = torch.optim.Adam(self.model.parameters(), lr=self.learning_rate)
         for n in range(self.nb_epoch):
             y_pred = self.model(X.float())
             loss = loss_fn(y_pred, Y.float())
