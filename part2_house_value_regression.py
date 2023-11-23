@@ -191,7 +191,6 @@ class Regressor():
         #######################################################################
         X, Y = self._preprocessor(x, y = y, training = False)
 
-        output = 
         return (mean_squared_error(self.model(X).detach().numpy(), Y.numpy()))**0.5
 
         #######################################################################
