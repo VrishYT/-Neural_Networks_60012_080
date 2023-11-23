@@ -13,9 +13,6 @@ class Regressor():
                  x: pd.DataFrame,
                  nb_epoch: int = 100,
                  learning_rate: float = 0.1,
-                 shuffle: bool = False,
-                 batch_size: int = 100,
-                 activation_function="relu",
                  no_hidden_layers: int = 2,
                  hidden_layer_size: int = 128,
                  ):
@@ -37,28 +34,20 @@ class Regressor():
         #######################################################################
 
         # Replace this code with your own
-        self.nb_epoch: int = nb_epoch
-        self.preprocessor = None
-        pro_x, _ = self._preprocessor(x, training=True)
-
-        self.input_size = pro_x.shape[1]
-        self.batch_size = batch_size
-        self.learning_rate = learning_rate
-        self.shuffle = shuffle
+        self.model = None
         self.stored_classes = None
+        pro_x, _ = self._preprocessor(x, training=True)
+        self.input_size = pro_x.shape[1]
         self.output_size = 1
+        
 
-        self.network = nn.MultiLayerNetwork(self.input_size, [hidden_layer_size] * no_hidden_layers,
-                                            [activation_function] * 3)
-        self.trainer = nn.Trainer(
-            self.network,
-            batch_size,
-            nb_epoch,
-            learning_rate,
-            "mse",
-            shuffle
-        )
+        
+        self.nb_epoch: int = nb_epoch
+        self.no_hidden_layers = no_hidden_layers
+        self.hidden_layer_size = hidden_layer_size
+        self.learning_rate = learning_rate
 
+        return 
         #######################################################################
         #                       ** END OF YOUR CODE **
         #######################################################################
@@ -115,12 +104,11 @@ class Regressor():
         preprocessed_x = scaler.fit_transform(numerical_cols)
 
         result_x = np.concatenate((preprocessed_x, one_hot_encoded_data), axis=1)
-        
-        print(result_x)
-        if y is not None:
-            y = y.to_numpy()
 
-        return result_x, y
+        if y is not None:
+            y = torch.tensor(y.values, dtype=torch.float32)
+
+        return torch.from_numpy(result_x), y
 
         #######################################################################
         #                       ** END OF YOUR CODE **
@@ -312,14 +300,14 @@ def example_main():
     x_train, x_test, y_train, y_test = train_test_split(x_train, y_train)
 
     # HP Tune
-    best = RegressorHyperParameterSearch(x_train, y_train, x_test, y_test)
+    #best = RegressorHyperParameterSearch(x_train, y_train, x_test, y_test)
 
     # Training
     # This example trains on the whole available dataset. 
     # You probably want to separate some held-out data 
     # to make sure the model isn't overfitting
-    regressor = Regressor(x_train, nb_epoch=best['nb_epoch'], batch_size=best['batch_size'],
-                          learning_rate=['learning_rate'])
+    regressor = Regressor(x_train)#, nb_epoch=best['nb_epoch'], batch_size=best['batch_size'],
+                          #learning_rate=['learning_rate'])
     regressor.fit(x_train, y_train)
     save_regressor(regressor)
 
