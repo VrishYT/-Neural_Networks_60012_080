@@ -11,7 +11,7 @@ import math
 
 class Regressor():
 
-    def __init__(self, x, nb_epoch = 1000, no_hidden_layers=1, hidden_layer_size=128, learning_rate=0.01):
+    def __init__(self, x, nb_epoch = 100, no_hidden_layers=2, hidden_layer_size=256, learning_rate=0.1):
         # You can add any input parameters you need
         # Remember to set them with a default value for LabTS tests
         """ 
@@ -130,7 +130,6 @@ class Regressor():
             layers[relu_name] = nn.ReLU()
 
         layers["output_layer"] = nn.Linear(self.hidden_layer_size,self.output_size, bias=True)
-        #layers["output_layer_act"] = nn.ReLU()
 
         self.model = nn.Sequential(layers)
         loss_fn = nn.MSELoss()
@@ -259,12 +258,6 @@ def RegressorHyperParameterSearch(x_train, y_train, x_validation, y_validation):
                         min_score = curr_score
                         best_parameters = (i,j,k,l)
 
-                        print("UPDATED minimum score:")
-                        print(min_score)
-                        print("NEW best parameters")
-                        print(best_parameters)
-
-
     return best_parameters
 
     #######################################################################
@@ -285,25 +278,29 @@ def example_main():
     # Splitting input and output
     #shuffle
     x = data.loc[:, data.columns != output_label]
-    y = data.loc[:,[output_label]]
+    y = data.loc[:, [output_label]]
 
-    validation_start = (data.shape[0] // 10) * 2
-    validation_end = (data.shape[0] // 10)
+    shuffled_indices = np.arange(data.shape[0])
+    np.random.shuffle(shuffled_indices)
 
-    x_train = x.iloc[:-validation_start]
-    y_train = y.iloc[:-validation_start]
+    shuffled_x = x.loc[shuffled_indices]
+    shuffled_y = y.loc[shuffled_indices]
 
-    x_validation = x.iloc[-validation_start:-validation_end]
-    y_validation = y.iloc[-validation_start:-validation_end]
-    x_validation = x_validation.reset_index(drop=True)
-    y_validation = y_validation.reset_index(drop=True)
+    n_train = int(len(shuffled_indices)*0.8)
 
-    x_test = x.iloc[-validation_end:]
-    y_test = y.iloc[-validation_end:]
+    x_train = shuffled_x.iloc[:n_train]
+    y_train = shuffled_y.iloc[:n_train]
+
+    x_test = shuffled_x.iloc[n_train:]
+    y_test = shuffled_y.iloc[n_train:]
+
+    x_train = x_test.reset_index(drop=True)
+    y_train = y_test.reset_index(drop=True)
+
     x_test = x_test.reset_index(drop=True)
     y_test = y_test.reset_index(drop=True)
 
-    #(optimal_num_hidden_layers, optimal_hidden_size, optimal_lr, optimal_epoch) = RegressorHyperParameterSearch(x_train, y_train, x_validation, y_validation)
+    # (optimal_num_hidden_layers, optimal_hidden_size, optimal_lr, optimal_epoch) = RegressorHyperParameterSearch(x_train, y_train, x_validation, y_validation)
 
     # print("BEST")
     # print(optimal_num_hidden_layers)
