@@ -11,7 +11,7 @@ import math
 
 class Regressor():
 
-    def __init__(self, x, nb_epoch = 1000, no_hidden_layers=2, hidden_layer_size=512, learning_rate=0.05):
+    def __init__(self, x, nb_epoch = 1000, no_hidden_layers=1, hidden_layer_size=512, learning_rate=0.05):
         # You can add any input parameters you need
         # Remember to set them with a default value for LabTS tests
         """ 
@@ -306,13 +306,13 @@ def example_main():
     x_test = x_test.reset_index(drop=True)
     y_test = y_test.reset_index(drop=True)
 
-    (optimal_num_hidden_layers, optimal_hidden_size, optimal_lr, optimal_epoch) = RegressorHyperParameterSearch(x_train, y_train, x_validation, y_validation)
+    # (optimal_num_hidden_layers, optimal_hidden_size, optimal_lr, optimal_epoch) = RegressorHyperParameterSearch(x_train, y_train, x_validation, y_validation)
 
-    print("BEST")
-    print(optimal_num_hidden_layers)
-    print(optimal_hidden_size)
-    print(optimal_lr)
-    print(optimal_epoch)
+    # print("BEST")
+    # print(optimal_num_hidden_layers)
+    # print(optimal_hidden_size)
+    # print(optimal_lr)
+    # print(optimal_epoch)
 
     #regressor = Regressor(x_train, nb_epoch=optimal_epoch, no_hidden_layers=optimal_num_hidden_layers, hidden_layer_size=optimal_hidden_size, learning_rate=optimal_lr)
     regressor = Regressor(x_train)
