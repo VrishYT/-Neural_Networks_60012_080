@@ -1,5 +1,9 @@
-Report - https://www.overleaf.com/7588344891ctyfpgkgvtrp#da9ee4
+# Part 1
 
-### TODO:
+Example use - runs example_main():
+_(assuming environment is correct)_
 
-remove spec.pdf
+`python3 part1_nn_lib.py`
+
+# Part 2
+
