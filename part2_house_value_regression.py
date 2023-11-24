@@ -309,10 +309,12 @@ def example_main():
     x_test = x_test.reset_index(drop=True)
     y_test = y_test.reset_index(drop=True)
 
-    # (optimal_num_hidden_layers, optimal_hidden_size, optimal_lr, optimal_epoch) = example_main_hyper_parameters()
-    # regressor = Regressor(x_train, nb_epoch=optimal_epoch, no_hidden_layers=optimal_num_hidden_layers,
-    #                       hidden_layer_size=optimal_hidden_size, learning_rate=optimal_lr)
-    regressor = Regressor(x_train)
+    # Find the optimum parameters
+    (optimal_num_hidden_layers, optimal_hidden_size, optimal_lr, optimal_epoch) = example_main_hyper_parameters()
+    
+    # Create a regressor with the optimum parameters
+    regressor = Regressor(x_train, nb_epoch=optimal_epoch, no_hidden_layers=optimal_num_hidden_layers, hidden_layer_size=optimal_hidden_size, learning_rate=optimal_lr)
+   
     regressor.fit(x_train, y_train)
 
     save_regressor(regressor)
@@ -328,14 +330,14 @@ def example_main_hyper_parameters():
     # Feel free to use another CSV reader tool
     # But remember that LabTS tests take Pandas DataFrame as inputs
     data = pd.read_csv("housing.csv")
-
+    
+    # Shuffle
     shuffled_indices = np.arange(data.shape[0])
     np.random.shuffle(shuffled_indices)
-    # Splitting input and output
-
+    
     shuffled_data = data.iloc[shuffled_indices]
-    # shuffle
-
+    
+    # Splitting input and output
     x = shuffled_data.loc[:, data.columns != output_label]
     y = shuffled_data.loc[:, [output_label]]
 
@@ -353,12 +355,13 @@ def example_main_hyper_parameters():
     x_validation = x_validation.reset_index(drop=True)
     y_validation = y_validation.reset_index(drop=True)
 
+    # Get the optimum parameters using validation set in the hyper parameter search
     (optimal_num_hidden_layers,
      optimal_hidden_size,
      optimal_lr,
      optimal_epoch) = RegressorHyperParameterSearch(x_train, y_train, x_validation, y_validation)
 
-    print("BEST")
+    print("Best Parameters")
     print(optimal_num_hidden_layers)
     print(optimal_hidden_size)
     print(optimal_lr)
